@@ -1,0 +1,23 @@
+{
+  "name": "cesium-wind-layer",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.ts --format cjs,esm --dts --sourcemap --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap --tsconfig tsconfig.json",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "peerDependencies": {
+    "cesium": "^1.122.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.5.3"
+  },
+  "files": [
+    "dist"
+  ]
+}

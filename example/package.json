@@ -1,0 +1,23 @@
+{
+  "name": "example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm run build:deps && vite build",
+    "build:deps": "turbo run build --filter=cesium-wind-layer",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "cesium": "^1.122.0",
+    "cesium-wind-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3",
+    "vite": "^4.5.3",
+    "vite-plugin-cesium": "^1.2.22"
+  }
+}
