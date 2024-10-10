@@ -105,8 +105,8 @@ vec2 calculateSpeedByRungeKutta2(vec2 lonLat) {
 
 float calculateWindNorm(vec2 speed) {
     vec3 percent = vec3(0.0);
-    vec2 uRange = vec2(0.0, 1.0);
-    vec2 vRange = vec2(0.0, 1.0);
+    vec2 uRange = vec2(-1.0, 1.0);
+    vec2 vRange = vec2(-1.0, 1.0);
     if(length(speed.xy) == 0.0){
       return 0.0;
     }
@@ -128,7 +128,6 @@ void main() {
     vec2 speedInLonLat = convertSpeedUnitToLonLat(lonLat, speed);
 
     vec3 particleSpeed = vec3(speedInLonLat, calculateWindNorm(speed / speedScaleFactor));
-    // gl_FragColor = particleSpeed;
     fragColor = vec4(speedInLonLat, calculateWindNorm(speedOrigin), 0.0);
 }
 `;

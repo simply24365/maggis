@@ -15,6 +15,8 @@ import { WindParticleSystem } from './windParticleSystem';
 
 export class WindLayer {
   private _show: boolean = true;
+  private _resized: boolean = false;
+  windData: WindData;
 
   get show(): boolean {
     return this._show;
@@ -51,6 +53,7 @@ export class WindLayer {
     this.viewer = viewer;
     this.scene = viewer.scene;
     this.options = options;
+    this.windData = windData;
 
     this.viewerParameters = {
       lonRange: new Cartesian2(0, 0),
@@ -78,8 +81,8 @@ export class WindLayer {
   private setupEventListeners(): void {
     this.viewer.camera.moveStart.addEventListener(this.moveStartFun);
     this.viewer.camera.moveEnd.addEventListener(this.moveEndFun);
-    window.addEventListener("resize", this.resizeFun);
     this.scene.preRender.addEventListener(this.preRenderFun);
+    window.addEventListener("resize", this.resizeFun);
   }
 
   private removeEventListeners(): void {
@@ -100,29 +103,49 @@ export class WindLayer {
   }
 
   private onResize(): void {
+    this._resized = true;
     this.remove();
-    this.particleSystem.canvasResize(this.scene.context);
-    this.addPrimitives();
   }
 
   private onPreRender(): void {
     this.preUpdateEvent.raiseEvent();
     this.postUpdateEvent.raiseEvent();
+    if (this._resized) {
+      this.particleSystem.canvasResize(this.scene.context);
+      this.addPrimitives();
+      this._resized = false;
+    }
   }
 
   private updateViewerParameters(): void {
     const viewRectangle = this.viewer.camera.computeViewRectangle();
     if (viewRectangle) {
-      this.viewerParameters.lonRange.x = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
-      this.viewerParameters.lonRange.y = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
-      this.viewerParameters.latRange.x = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
-      this.viewerParameters.latRange.y = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
+      const minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
+      const maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
+      const minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
+      const maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
+      // 计算经纬度范围的交集
+      const lonRange = new Cartesian2(
+        Math.max(this.windData.bounds.west, minLon),
+        Math.min(this.windData.bounds.east, maxLon)
+      );
+      const latRange = new Cartesian2(
+        Math.max(this.windData.bounds.south, minLat),
+        Math.min(this.windData.bounds.north, maxLat)
+      );
+      this.viewerParameters.lonRange = lonRange;
+      this.viewerParameters.latRange = latRange;
     }
-    this.viewerParameters.pixelSize = this.viewer.camera.getPixelSize(
+
+    const pixelSize = this.viewer.camera.getPixelSize(
       new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
       this.viewer.scene.drawingBufferWidth,
       this.viewer.scene.drawingBufferHeight
     );
+    if (pixelSize > 0) {
+      this.viewerParameters.pixelSize = pixelSize;
+    }
+
     this.viewerParameters.sceneMode = this.scene.mode;
   }
 
@@ -133,7 +156,6 @@ export class WindLayer {
 
   private addPrimitives(): void {
     this.primitives = this.particleSystem.getPrimitives();
-    console.log('Adding primitives to scene:', this.primitives);
     this.primitives.forEach(primitive => {
       this.scene.primitives.add(primitive);
     });
@@ -141,7 +163,6 @@ export class WindLayer {
   }
 
   remove(): void {
-    this.removeEventListeners();
     this.primitives.forEach(primitive => {
       this.scene.primitives.remove(primitive);
     });
@@ -154,6 +175,7 @@ export class WindLayer {
 
   destroy(): void {
     this.remove();
+    this.removeEventListeners();
     this.particleSystem.destroy();
     this._isDestroyed = true;
   }

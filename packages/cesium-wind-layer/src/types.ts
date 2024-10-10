@@ -9,6 +9,7 @@ export interface WindLayerOptions {
   lineWidth: number;
   fadeOpacity: number;
   particlesTextureSize: number;
+  flipY?: boolean;
 }
 
 export interface WindDataDemention {

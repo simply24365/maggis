@@ -83,6 +83,7 @@ declare module 'cesium' {
       pass: Pass;
     });
     framebuffer?: Framebuffer;
+    execute(context: any): void;
   }
 
   export class RenderState {
@@ -123,10 +124,18 @@ declare module 'cesium' {
     destroy(): void;
   }
 
+  export enum TextureWrap {
+    CLAMP_TO_EDGE,
+    REPEAT,
+    MIRRORED_REPEAT,
+  }
+
   export class Sampler {
     constructor(options: {
-      minificationFilter: TextureMinificationFilter;
-      magnificationFilter: TextureMagnificationFilter;
+      minificationFilter?: TextureMinificationFilter;
+      magnificationFilter?: TextureMagnificationFilter;
+      wrapS?: TextureWrap;
+      wrapT?: TextureWrap;
     });
   }
 

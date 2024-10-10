@@ -50,15 +50,13 @@ vec3 convertCoordinate(vec2 lonLat) {
 }
 
 vec4 calculateProjectedCoordinate(vec2 lonLat) {
-    vec3 particlePosition = convertCoordinate(lonLat);
-    vec4 projectedCoordinate = czm_modelViewProjection * vec4(particlePosition, 1.0);
-    return projectedCoordinate;
-}
-
-vec4 calculateProjectedCoordinate2D(vec2 lonLat) {
-    // 2D模式下的坐标转换
-    vec3 position2D = vec3(radians(lonLat.x), radians(lonLat.y), 0.0);
-    return czm_modelViewProjection * vec4(position2D, 1.0);
+    if (is3D) {
+        vec3 particlePosition = convertCoordinate(lonLat);
+        return czm_modelViewProjection * vec4(particlePosition, 1.0);
+    } else {
+        vec3 position2D = vec3(radians(lonLat.x), radians(lonLat.y), 0.0);
+        return czm_modelViewProjection * vec4(position2D, 1.0);
+    }
 }
 
 vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign) {
@@ -77,7 +75,10 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
 }
 
 void main() {
-    vec2 particleIndex = st;
+    // 翻转 Y 轴坐标
+    vec2 flippedIndex = vec2(st.x, 1.0 - st.y);
+    
+    vec2 particleIndex = flippedIndex;
 
     vec2 previousPosition = texture(previousParticlesPosition, particleIndex).rg;
     vec2 currentPosition = texture(currentParticlesPosition, particleIndex).rg;
@@ -89,23 +90,13 @@ void main() {
 
     adjacentPoints projectedCoordinates;
     if (isAnyRandomPointUsed > 0.0) {
-        if (is3D) {
-            projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
-        } else {
-            projectedCoordinates.previous = calculateProjectedCoordinate2D(previousPosition);
-        }
+        projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
         projectedCoordinates.current = projectedCoordinates.previous;
         projectedCoordinates.next = projectedCoordinates.previous;
     } else {
-        if (is3D) {
-            projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
-            projectedCoordinates.current = calculateProjectedCoordinate(currentPosition);
-            projectedCoordinates.next = calculateProjectedCoordinate(nextPosition);
-        } else {
-            projectedCoordinates.previous = calculateProjectedCoordinate2D(previousPosition);
-            projectedCoordinates.current = calculateProjectedCoordinate2D(currentPosition);
-            projectedCoordinates.next = calculateProjectedCoordinate2D(nextPosition);
-        }
+        projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
+        projectedCoordinates.current = calculateProjectedCoordinate(currentPosition);
+        projectedCoordinates.next = calculateProjectedCoordinate(nextPosition);
     }
 
     int pointToUse = int(normal.x);
@@ -116,7 +107,7 @@ void main() {
     if (pointToUse == -1) {
         offset = pixelSize * calculateOffsetOnNormalDirection(projectedCoordinates.previous, projectedCoordinates.current, offsetSign);
         gl_Position = projectedCoordinates.previous + offset;
-    } else  if (pointToUse == 1) {
+    } else if (pointToUse == 1) {
         offset = pixelSize * calculateOffsetOnNormalDirection(projectedCoordinates.current, projectedCoordinates.next, offsetSign);
         gl_Position = projectedCoordinates.next + offset;
     }

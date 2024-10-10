@@ -1,4 +1,4 @@
-import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilter, TextureMinificationFilter, Math as CesiumMath, Cartesian2 } from 'cesium';
+import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilter, TextureMinificationFilter, Cartesian2 } from 'cesium';
 import { WindLayerOptions, WindData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
@@ -23,7 +23,6 @@ export class WindParticlesComputing {
     updatePosition: CustomPrimitive;
     postProcessingPosition: CustomPrimitive;
   };
-  lastTime: number = 0;
   uTextureData: Float32Array;
   vTextureData: Float32Array;
   bounds: { west: number; south: number; east: number; north: number; };
@@ -50,7 +49,7 @@ export class WindParticlesComputing {
       height: this.windData.height,
       pixelFormat: PixelFormat.RED,
       pixelDatatype: PixelDatatype.FLOAT,
-      flipY: false,
+      flipY: this.options.flipY ?? false,
       sampler: new Sampler({
         minificationFilter: TextureMinificationFilter.LINEAR,
         magnificationFilter: TextureMagnificationFilter.LINEAR
@@ -73,19 +72,7 @@ export class WindParticlesComputing {
     };
   }
 
-  private randomizeParticles() {
-    const array = new Float32Array(this.options.particlesTextureSize * this.options.particlesTextureSize * 4);
-    for (let i = 0; i < this.options.particlesTextureSize * this.options.particlesTextureSize; i++) {
-      array[4 * i] = CesiumMath.randomBetween(this.bounds.west, this.bounds.east);
-      array[4 * i + 1] = CesiumMath.randomBetween(this.bounds.south, this.bounds.north);
-      array[4 * i + 2] = 0;
-      array[4 * i + 3] = 0;
-    }
-    return array;
-  }
-
   createParticlesTextures() {
-    const particlesArray = this.randomizeParticles();
     const options = {
       context: this.context,
       width: this.options.particlesTextureSize,
@@ -102,20 +89,17 @@ export class WindParticlesComputing {
       })
     }
 
-    const particleOptions = {
-      ...options,
-      source: {
-        arrayBufferView: particlesArray
-      }
-    }
-
     this.particlesTextures = {
-      previousParticlesPosition: new Texture(particleOptions),
-      currentParticlesPosition: new Texture(particleOptions),
-      nextParticlesPosition: new Texture(particleOptions),
-      postProcessingPosition: new Texture(particleOptions),
+      previousParticlesPosition: new Texture(options),
+      currentParticlesPosition: new Texture(options),
+      nextParticlesPosition: new Texture(options),
+      postProcessingPosition: new Texture(options),
       particlesSpeed: new Texture(options)
     };
+  }
+
+  destroyParticlesTextures() {
+    Object.values(this.particlesTextures).forEach(texture => texture.destroy());
   }
 
   createComputingPrimitives() {
@@ -126,8 +110,7 @@ export class WindParticlesComputing {
       (maximum.x - minimum.x) / (dimension.x - 1),
       (maximum.y - minimum.y) / (dimension.y - 1)
     );
-    const lonRange = new Cartesian2(this.bounds.west, this.bounds.east);
-    const latRange = new Cartesian2(this.bounds.south, this.bounds.north);
+
 
     this.primitives = {
       calculateSpeed: new CustomPrimitive({
@@ -141,8 +124,6 @@ export class WindParticlesComputing {
           minimum: () => minimum,
           maximum: () => maximum,
           interval: () => interval,
-          lonRange: () => lonRange,
-          latRange: () => latRange,
         },
         fragmentShaderSource: ShaderManager.getCalculateSpeedShader(),
         outputTexture: this.particlesTextures.particlesSpeed,
@@ -177,17 +158,14 @@ export class WindParticlesComputing {
         uniformMap: {
           nextParticlesPosition: () => this.particlesTextures.nextParticlesPosition,
           particlesSpeed: () => this.particlesTextures.particlesSpeed,
-          lonRange: () => [this.bounds.west, this.bounds.east],
-          latRange: () => [this.bounds.south, this.bounds.north],
-          viewerLonRange: () => this.viewerParameters.lonRange,
-          viewerLatRange: () => this.viewerParameters.latRange,
+          lonRange: () => this.viewerParameters.lonRange,
+          latRange: () => this.viewerParameters.latRange,
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,
           interval: () => interval,
           randomCoefficient: function () {
-            const randomCoefficient = Math.random();
-            return randomCoefficient;
+            return Math.random();
           },
           dropRate: () => this.options.dropRate,
           dropRateBump: () => this.options.dropRateBump
@@ -227,24 +205,14 @@ export class WindParticlesComputing {
       max = Math.max(...array);
     }
 
+    const maxNum = Math.max(Math.abs(min), Math.abs(max));
+
     for (let i = 0; i < array.length; i++) {
-      const value = (array[i] - min) / (max - min); // Normalize from [-1, 1] to [0, 1]
+      const value = array[i] / maxNum; // Normalize to [-1, 1]
       result[i] = value;
     }
 
     return result;
-  }
-
-  applyViewerParameters(viewerParameters: any) {
-    this.viewerParameters = viewerParameters;
-    // Update uniforms if necessary
-  }
-
-  canvasResize(context: any) {
-    this.context = context;
-    this.createWindTextures();
-    this.createParticlesTextures();
-    this.createComputingPrimitives();
   }
 
   destroy() {

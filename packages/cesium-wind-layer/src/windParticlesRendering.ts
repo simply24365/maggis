@@ -1,4 +1,4 @@
-import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, DepthFunction, SceneMode } from 'cesium';
+import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, DepthFunction, SceneMode, TextureWrap, VertexArray, BufferUsage } from 'cesium';
 import { WindLayerOptions } from './types';
 import { WindParticlesComputing } from './windParticlesComputing';
 import CustomPrimitive from './customPrimitive';
@@ -25,23 +25,23 @@ export class WindParticlesRendering {
     }
 
     this.colorTable = this.createColorTableTexture();
-    this.textures = this.createRenderingTextures(context);
-    this.framebuffers = this.createRenderingFramebuffers(context);
+    this.textures = this.createRenderingTextures();
+    this.framebuffers = this.createRenderingFramebuffers();
     this.primitives = this.createPrimitives();
   }
 
-  createRenderingTextures(context: any) {
+  createRenderingTextures() {
     const colorTextureOptions = {
-      context: context,
-      width: context.drawingBufferWidth,
-      height: context.drawingBufferHeight,
+      context: this.context,
+      width: this.context.drawingBufferWidth,
+      height: this.context.drawingBufferHeight,
       pixelFormat: PixelFormat.RGBA,
       pixelDatatype: PixelDatatype.UNSIGNED_BYTE
     };
     const depthTextureOptions = {
-      context: context,
-      width: context.drawingBufferWidth,
-      height: context.drawingBufferHeight,
+      context: this.context,
+      width: this.context.drawingBufferWidth,
+      height: this.context.drawingBufferHeight,
       pixelFormat: PixelFormat.DEPTH_COMPONENT,
       pixelDatatype: PixelDatatype.UNSIGNED_INT
     };
@@ -56,24 +56,30 @@ export class WindParticlesRendering {
     }
   }
 
-  createRenderingFramebuffers(context: any) {
+  createRenderingFramebuffers() {
     return {
       segments: new Framebuffer({
-        context: context,
+        context: this.context,
         colorTextures: [this.textures.segmentsColor],
         depthTexture: this.textures.segmentsDepth
       }),
       currentTrails: new Framebuffer({
-        context: context,
+        context: this.context,
         colorTextures: [this.textures.currentTrailsColor],
         depthTexture: this.textures.currentTrailsDepth
       }),
       nextTrails: new Framebuffer({
-        context: context,
+        context: this.context,
         colorTextures: [this.textures.nextTrailsColor],
         depthTexture: this.textures.nextTrailsDepth
       })
     }
+  }
+
+  destoryRenderingFramebuffers() {
+    Object.values(this.framebuffers).forEach((framebuffer: any) => {
+      framebuffer.destroy();
+    });
   }
 
   private createColorTableTexture(): Texture {
@@ -90,7 +96,9 @@ export class WindParticlesRendering {
       pixelDatatype: PixelDatatype.FLOAT,
       sampler: new Sampler({
         minificationFilter: TextureMinificationFilter.LINEAR,
-        magnificationFilter: TextureMagnificationFilter.LINEAR
+        magnificationFilter: TextureMagnificationFilter.LINEAR,
+        wrapS: TextureWrap.CLAMP_TO_EDGE,
+        wrapT: TextureWrap.CLAMP_TO_EDGE
       }),
       source: {
         width: this.options.colors.length,
@@ -132,7 +140,7 @@ export class WindParticlesRendering {
     });
   }
 
-  private createSegmentsGeometry(): Geometry {
+  createSegmentsGeometry(): Geometry {
     const repeatVertex = 4, texureSize = this.options.particlesTextureSize;
     // 坐标系
     //  z
@@ -264,7 +272,7 @@ export class WindParticlesRendering {
         },
         depthMask: true
       }),
-      framebuffer: this.framebuffers.currentTrails,
+      framebuffer: this.framebuffers.nextTrails,
       autoClear: true,
       preExecute: () => {
         // swap framebuffers before binding
@@ -312,17 +320,24 @@ export class WindParticlesRendering {
     return { segments, trails, screen };
   }
 
-  applyViewerParameters(viewerParameters: any): void {
-    this.viewerParameters = viewerParameters;
-    // Update uniforms if necessary
-  }
-
-  canvasResize(context: any): void {
-    this.context = context;
-    this.primitives = this.createPrimitives();
+  onParticlesTextureSizeChange() {
+    const geometry = this.createSegmentsGeometry();
+    this.primitives.segments.geometry = geometry;
+    const vertexArray = VertexArray.fromGeometry({
+      context: this.context,
+      geometry: geometry,
+      attributeLocations: this.primitives.segments.attributeLocations,
+      bufferUsage: BufferUsage.STATIC_DRAW,
+    });
+    if (this.primitives.segments.commandToExecute) {
+      this.primitives.segments.commandToExecute.vertexArray = vertexArray;
+    }
   }
 
   destroy(): void {
+    Object.values(this.framebuffers).forEach((framebuffer: any) => {
+      framebuffer.destroy();
+    });
     Object.values(this.primitives).forEach((primitive: any) => {
       primitive.destroy();
     });

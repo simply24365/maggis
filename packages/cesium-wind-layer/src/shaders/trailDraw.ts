@@ -15,17 +15,19 @@ out vec4 fragColor;
 void main() {
     vec4 pointsColor = texture(segmentsColorTexture, textureCoordinate);
     vec4 trailsColor = texture(currentTrailsColor, textureCoordinate);
-    trailsColor = floor(fadeOpacity * 255.0 * trailsColor) / 255.0; // make sure the trailsColor will be strictly decreased
+    
+    trailsColor.a *= fadeOpacity;
 
     float pointsDepth = texture(segmentsDepthTexture, textureCoordinate).r;
     float trailsDepth = texture(trailsDepthTexture, textureCoordinate).r;
     float globeDepth = czm_unpackDepth(texture(czm_globeDepthTexture, textureCoordinate));
+    
     fragColor = vec4(0.0);
     if (pointsDepth < globeDepth) {
-        fragColor = fragColor + pointsColor;
+        fragColor += pointsColor;
     }
     if (trailsDepth < globeDepth) {
-        fragColor = fragColor + trailsColor;
+        fragColor += trailsColor;
     }
     gl_FragDepth = min(pointsDepth, trailsDepth);
 }
