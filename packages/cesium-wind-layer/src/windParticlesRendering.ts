@@ -1,4 +1,4 @@
-import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, DepthFunction, SceneMode, TextureWrap, VertexArray, BufferUsage } from 'cesium';
+import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, SceneMode, TextureWrap, VertexArray, BufferUsage } from 'cesium';
 import { WindLayerOptions } from './types';
 import { WindParticlesComputing } from './windParticlesComputing';
 import CustomPrimitive from './customPrimitive';
@@ -13,7 +13,7 @@ export class WindParticlesRendering {
   private colorTable: Texture;
   textures: ReturnType<typeof this.createRenderingTextures>;
   framebuffers: ReturnType<typeof this.createRenderingFramebuffers>;
-  moving: boolean = false;
+
   constructor(context: any, options: WindLayerOptions, viewerParameters: any, computing: WindParticlesComputing) {
     this.context = context;
     this.options = options;
@@ -49,11 +49,7 @@ export class WindParticlesRendering {
 
     return {
       segmentsColor: new Texture(colorTextureOptions),
-      segmentsDepth: new Texture(depthTextureOptions),
-      currentTrailsColor: new Texture(colorTextureOptions),
-      currentTrailsDepth: new Texture(depthTextureOptions),
-      nextTrailsColor: new Texture(colorTextureOptions),
-      nextTrailsDepth: new Texture(depthTextureOptions)
+      segmentsDepth: new Texture(depthTextureOptions)
     }
   }
 
@@ -63,16 +59,6 @@ export class WindParticlesRendering {
         context: this.context,
         colorTextures: [this.textures.segmentsColor],
         depthTexture: this.textures.segmentsDepth
-      }),
-      currentTrails: new Framebuffer({
-        context: this.context,
-        colorTextures: [this.textures.currentTrailsColor],
-        depthTexture: this.textures.currentTrailsDepth
-      }),
-      nextTrails: new Framebuffer({
-        context: this.context,
-        colorTextures: [this.textures.nextTrailsColor],
-        depthTexture: this.textures.nextTrailsDepth
       })
     }
   }
@@ -106,38 +92,6 @@ export class WindParticlesRendering {
         height: 1,
         arrayBufferView: colorTableData
       }
-    });
-  }
-
-  private createFullscreenQuad(): Geometry {
-    return new Geometry({
-      attributes: new (GeometryAttributes as any)({
-        position: new GeometryAttribute({
-          componentDatatype: ComponentDatatype.FLOAT,
-          componentsPerAttribute: 3,
-          //  v3----v2
-          //  |     |
-          //  |     |
-          //  v0----v1
-          values: new Float32Array([
-            -1, -1, 0, // v0
-            1, -1, 0, // v1
-            1, 1, 0, // v2
-            -1, 1, 0, // v3
-          ])
-        }),
-        st: new GeometryAttribute({
-          componentDatatype: ComponentDatatype.FLOAT,
-          componentsPerAttribute: 2,
-          values: new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 1,
-          ])
-        })
-      }),
-      indices: new Uint32Array([3, 2, 0, 0, 2, 1])
     });
   }
 
@@ -249,83 +203,16 @@ export class WindParticlesRendering {
           enabled: true
         },
         depthMask: true,
-      }),
-      framebuffer: this.framebuffers.segments,
-      autoClear: true
-    });
-
-    const trails = new CustomPrimitive({
-      commandType: 'Draw',
-      attributeLocations: {
-        position: 0,
-        st: 1,
-      },
-      geometry: this.createFullscreenQuad(),
-      primitiveType: PrimitiveType.TRIANGLES,
-      uniformMap: {
-        segmentsColorTexture: () => this.textures.segmentsColor,
-        segmentsDepthTexture: () => this.textures.segmentsDepth,
-        currentTrailsColor: () => this.framebuffers.currentTrails.getColorTexture(0),
-        trailsDepthTexture: () => this.framebuffers.currentTrails.depthTexture,
-        // Modify fadeOpacity to be 0 when moving
-        fadeOpacity: () => this.options.fadeOpacity
-      },
-      vertexShaderSource: ShaderManager.getFullscreenQuadVertexShader(),
-      fragmentShaderSource: ShaderManager.getTrailDrawFragmentShader(),
-      rawRenderState: this.createRawRenderState({
-        viewport: undefined,
-        depthTest: {
-          enabled: true,
-          func: DepthFunction.ALWAYS
-        },
-        depthMask: true
-      }),
-      framebuffer: this.framebuffers.nextTrails,
-      autoClear: true,
-      preExecute: () => {
-        // swap framebuffers before binding
-        const temp = this.framebuffers.currentTrails;
-        this.framebuffers.currentTrails = this.framebuffers.nextTrails;
-        this.framebuffers.nextTrails = temp;
-
-        // keep the framebuffers up to date
-        if (this.primitives.trails.commandToExecute) {
-          this.primitives.trails.commandToExecute.framebuffer = this.framebuffers.nextTrails;
-        }
-        if (this.primitives.trails.clearCommand) {
-          this.primitives.trails.clearCommand.framebuffer = this.framebuffers.nextTrails;
-        }
-      }
-    });
-
-    const screen = new CustomPrimitive({
-      commandType: 'Draw',
-      attributeLocations: {
-        position: 0,
-        st: 1
-      },
-      geometry: this.createFullscreenQuad(),
-      primitiveType: PrimitiveType.TRIANGLES,
-      uniformMap: {
-        trailsColorTexture: () => this.framebuffers.nextTrails.getColorTexture(0),
-        trailsDepthTexture: () => this.framebuffers.nextTrails.depthTexture
-      },
-      vertexShaderSource: ShaderManager.getFullscreenQuadVertexShader(),
-      fragmentShaderSource: ShaderManager.getScreenDrawFragmentShader(),
-      rawRenderState: this.createRawRenderState({
-        viewport: undefined,
-        depthTest: {
-          enabled: false
-        },
-        depthMask: true,
         blending: {
-          enabled: true
+          enabled: true,
+          blendEquation: WebGLRenderingContext.FUNC_ADD,
+          blendFuncSource: WebGLRenderingContext.SRC_ALPHA,
+          blendFuncDestination: WebGLRenderingContext.ONE_MINUS_SRC_ALPHA
         }
-      }),
-      framebuffer: undefined
+      })
     });
 
-    return { segments, trails, screen };
+    return { segments };
   }
 
   onParticlesTextureSizeChange() {

@@ -26,28 +26,32 @@ new SceneModePicker('sceneModePicker', viewer.scene, 0)
 // Define wind layer options
 const options: WindLayerOptions = {
   particleHeight: 1000.0,
-  fadeOpacity: 0.95,
   dropRate: 0.003,
   dropRateBump: 0.01,
   speedFactor: 5.0,
-  lineWidth: 10.0,
-  particlesTextureSize: 256,
+  lineWidth: 5.0,
+  particlesTextureSize: 200,
   colors: [
-    'rgb(36,104, 180)',
-    'rgb(60,157, 194)',
-    'rgb(128,205,193 )',
-    'rgb(151,218,168 )',
-    'rgb(198,231,181)',
-    'rgb(238,247,217)',
-    'rgb(255,238,159)',
-    'rgb(252,217,125)',
-    'rgb(255,182,100)',
-    'rgb(252,150,75)',
-    'rgb(250,112,52)',
-    'rgb(245,64,32)',
-    'rgb(237,45,28)',
-    'rgb(220,24,32)',
-    'rgb(180,0,35)',
+    "rgb(110, 64, 170)",
+    "rgb(95, 86, 201)",
+    "rgb(74, 113, 221)",
+    "rgb(51, 145, 225)",
+    "rgb(32, 177, 212)",
+    "rgb(25, 206, 186)",
+    "rgb(34, 229, 153)",
+    "rgb(59, 242, 119)",
+    "rgb(100, 247, 95)",
+    "rgb(150, 243, 87)",
+    "rgb(186, 227, 73)",
+    "rgb(214, 197, 50)",
+    "rgb(242, 162, 47)",
+    "rgb(255, 129, 63)",
+    "rgb(255, 100, 91)",
+    "rgb(255, 79, 124)",
+    "rgb(233, 66, 154)",
+    "rgb(195, 61, 173)",
+    "rgb(152, 61, 179)",
+    "rgb(110, 64, 170)"
   ],
   flipY: true,
 };
@@ -62,8 +66,6 @@ fetch('/wind.json').then(res => res.json()).then(data => {
       north: data.bbox[3],
     }
   };
-  // 创建风场图层
-  windLayer = new WindLayer(viewer, windData, options);
 
   // Zoom to wind data bounds
   if (windData.bounds) {
@@ -78,6 +80,8 @@ fetch('/wind.json').then(res => res.json()).then(data => {
       duration: 0,
     });
   }
+  // 创建风场图层
+  windLayer = new WindLayer(viewer, windData, options);
 });
 
 

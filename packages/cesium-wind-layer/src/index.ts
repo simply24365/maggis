@@ -6,7 +6,8 @@ import {
   Cartesian3,
   BoundingSphere,
   Ellipsoid,
-  SceneMode
+  SceneMode,
+  Math as CesiumMath
 } from 'cesium';
 
 import { WindLayerOptions, WindData } from './types';
@@ -28,6 +29,17 @@ export class WindLayer {
     }
   }
 
+  static defaultOptions: WindLayerOptions = {
+    particlesTextureSize: 100,
+    particleHeight: 0,
+    lineWidth: 3.0,
+    speedFactor: 0.15,
+    dropRate: 0.003,
+    dropRateBump: 0.001,
+    colors: ['white'],
+    flipY: false
+  }
+
   private viewer: Viewer;
   private scene: Scene;
   private options: WindLayerOptions;
@@ -47,11 +59,11 @@ export class WindLayer {
   private resizeFun: () => void;
   private preRenderFun: () => void;
 
-  constructor(viewer: Viewer, windData: WindData, options: WindLayerOptions) {
+  constructor(viewer: Viewer, windData: WindData, options?: Partial<WindLayerOptions>) {
     this.show = true;
     this.viewer = viewer;
     this.scene = viewer.scene;
-    this.options = options;
+    this.options = { ...WindLayer.defaultOptions, ...options };
     this.windData = windData;
 
     this.viewerParameters = {
@@ -93,15 +105,11 @@ export class WindLayer {
   }
 
   private onMoveStart(): void {
-    this.particleSystem.rendering.moving = true;
-    this.updatePrimitivesVisibility(false);
   }
 
   private onMoveEnd(): void {
-    this.particleSystem.rendering.moving = false;
-    this.updateViewerParameters();
-    this.particleSystem.applyViewerParameters(this.viewerParameters);
-    this.updatePrimitivesVisibility(true);
+    // this.updateViewerParameters();
+    // this.particleSystem.applyViewerParameters(this.viewerParameters);
   }
 
   private onResize(): void {
@@ -120,8 +128,25 @@ export class WindLayer {
   }
 
   private updateViewerParameters(): void {
-    this.viewerParameters.latRange = new Cartesian2(this.windData.bounds.south, this.windData.bounds.north);
-    this.viewerParameters.lonRange = new Cartesian2(this.windData.bounds.west, this.windData.bounds.east);
+    const viewRectangle = this.viewer.camera.computeViewRectangle();
+    if (viewRectangle) {
+      const minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
+      const maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
+      const minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
+      const maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
+      // 计算经纬度范围的交集
+      const lonRange = new Cartesian2(
+        Math.max(this.windData.bounds.west, minLon),
+        Math.min(this.windData.bounds.east, maxLon)
+      );
+      const latRange = new Cartesian2(
+        Math.max(this.windData.bounds.south, minLat),
+        Math.min(this.windData.bounds.north, maxLat)
+      );
+      this.viewerParameters.lonRange = lonRange;
+      this.viewerParameters.latRange = latRange;
+    }
+
     const pixelSize = this.viewer.camera.getPixelSize(
       new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
       this.viewer.scene.drawingBufferWidth,

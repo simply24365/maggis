@@ -142,7 +142,7 @@ export class WindParticlesComputing {
         commandType: 'Compute',
         uniformMap: {
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
-          particlesSpeed: () => this.particlesTextures.particlesSpeed
+          particlesSpeed: () => this.particlesTextures.particlesSpeed,
         },
         fragmentShaderSource: ShaderManager.getUpdatePositionShader(),
         outputTexture: this.particlesTextures.nextParticlesPosition,
@@ -160,6 +160,8 @@ export class WindParticlesComputing {
           particlesSpeed: () => this.particlesTextures.particlesSpeed,
           lonRange: () => this.viewerParameters.lonRange,
           latRange: () => this.viewerParameters.latRange,
+          dataLonRange: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.east),
+          dataLatRange: () => new Cartesian2(this.windData.bounds.south, this.windData.bounds.north),
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,

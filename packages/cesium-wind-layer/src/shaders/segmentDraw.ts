@@ -13,15 +13,18 @@ uniform float particleHeight;
 uniform float aspect;
 uniform float pixelSize;
 uniform float lineWidth;
-uniform bool is3D; // 新增: 用于区分2D和3D模式
+uniform bool is3D;
 
+// 添加输出变量传递给片元着色器
+out float speedNormalization;
+out float v_segmentPosition;
+
+// 添加结构体定义
 struct adjacentPoints {
     vec4 previous;
     vec4 current;
     vec4 next;
 };
-
-out float speedNormalization;
 
 vec3 convertCoordinate(vec2 lonLat) {
     // WGS84 (lon, lat, lev) -> ECEF (x, y, z)
@@ -61,15 +64,20 @@ vec4 calculateProjectedCoordinate(vec2 lonLat) {
     }
 }
 
-vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign) {
+vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign, float widthFactor) {
     vec2 aspectVec2 = vec2(aspect, 1.0);
     vec2 pointA_XY = (pointA.xy / pointA.w) * aspectVec2;
     vec2 pointB_XY = (pointB.xy / pointB.w) * aspectVec2;
 
-    float offsetLength = lineWidth / 2.0;
+    // 计算方向向量
     vec2 direction = normalize(pointB_XY - pointA_XY);
+    
+    // 计算法向量
     vec2 normalVector = vec2(-direction.y, direction.x);
     normalVector.x = normalVector.x / aspect;
+    
+    // 使用 widthFactor 调整宽度
+    float offsetLength = lineWidth * widthFactor;
     normalVector = offsetLength * normalVector;
 
     vec4 offset = vec4(offsetSign * normalVector, 0.0, 0.0);
@@ -104,14 +112,35 @@ void main() {
     int pointToUse = int(normal.x);
     float offsetSign = normal.y;
     vec4 offset = vec4(0.0);
-    // render lines with triangles and miter joint
-    // read https://blog.scottlogic.com/2019/11/18/drawing-lines-with-webgl.html for detail
-    if (pointToUse == -1) {
-        offset = pixelSize * calculateOffsetOnNormalDirection(projectedCoordinates.previous, projectedCoordinates.current, offsetSign);
+    
+    // 计算速度相关的宽度和长度因子
+    float speedFactor = max(0.3, speedNormalization);
+    float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
+    float lengthFactor = 10.0; // 控制整体长度
+    
+    if (pointToUse == 1) {
+        // 头部位置
+        offset = pixelSize * calculateOffsetOnNormalDirection(
+            projectedCoordinates.previous, 
+            projectedCoordinates.current, 
+            offsetSign,
+            widthFactor * speedFactor
+        );
         gl_Position = projectedCoordinates.previous + offset;
-    } else if (pointToUse == 1) {
-        offset = pixelSize * calculateOffsetOnNormalDirection(projectedCoordinates.current, projectedCoordinates.next, offsetSign);
-        gl_Position = projectedCoordinates.next + offset;
+        v_segmentPosition = 0.0; // 头部
+    } else if (pointToUse == -1) {
+        // 尾部位置，向后延伸
+        vec4 direction = projectedCoordinates.next - projectedCoordinates.current;
+        vec4 extendedPosition = projectedCoordinates.current + direction * lengthFactor;
+        
+        offset = pixelSize * calculateOffsetOnNormalDirection(
+            projectedCoordinates.current,
+            extendedPosition,
+            offsetSign,
+            widthFactor * speedFactor
+        );
+        gl_Position = extendedPosition + offset;
+        v_segmentPosition = 1.0; // 尾部
     }
 
     speedNormalization = texture(particlesSpeed, particleIndex).b;
@@ -119,18 +148,31 @@ void main() {
 `;
 
 export const renderParticlesFragmentShader = /*glsl*/`#version 300 es
-uniform sampler2D colorTable;
+precision highp float;
 
 in float speedNormalization;
+in float v_segmentPosition;
+
+uniform sampler2D colorTable;
 
 out vec4 fragColor;
 
 void main() {
-  const float zero = 0.0;
-  if(speedNormalization > zero){
-    fragColor = texture(colorTable, vec2(speedNormalization, zero));
-  } else {
-    fragColor = vec4(zero);
-  }
+    const float zero = 0.0;
+    if(speedNormalization > zero) {
+        vec4 baseColor = texture(colorTable, vec2(speedNormalization, zero));
+        
+        // 使用更平滑的渐变效果
+        float alpha = smoothstep(0.0, 1.0, v_segmentPosition);
+        alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
+        
+        // 根据速度调整透明度
+        float speedAlpha = mix(0.3, 1.0, speedNormalization);
+        
+        // 组合颜色和透明度
+        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha * 0.9); // 稍微降低整体透明度
+    } else {
+        fragColor = vec4(zero);
+    }
 }
 `;

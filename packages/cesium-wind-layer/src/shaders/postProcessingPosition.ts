@@ -13,6 +13,10 @@ uniform vec2 interval; // interval of each dimension
 uniform vec2 lonRange;
 uniform vec2 latRange;
 
+// range (min, max)
+uniform vec2 dataLonRange;
+uniform vec2 dataLatRange;
+
 uniform float randomCoefficient;
 uniform float dropRate;
 uniform float dropRateBump;
@@ -54,14 +58,14 @@ bool particleNoSpeed(vec2 particle) {
 }
 
 vec2 generateRandomParticle(vec2 seed) {
-    float randomLon = rand(seed, lonRange);
-    float randomLat = rand(-seed, latRange);
+    float randomLon = rand(seed, dataLonRange);
+    float randomLat = rand(-seed, dataLatRange);
 
     return vec2(randomLon, randomLat);
 }
 
 bool particleOutbound(vec2 particle) {
-    return particle.y < latRange.x || particle.y > latRange.y || particle.x < lonRange.x || particle.x > lonRange.y;
+    return particle.y < dataLatRange.x || particle.y > dataLatRange.y || particle.x < dataLonRange.x || particle.x > dataLonRange.y;
 }
 
 out vec4 fragColor;

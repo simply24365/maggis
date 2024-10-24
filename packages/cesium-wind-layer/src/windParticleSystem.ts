@@ -27,8 +27,6 @@ export class WindParticleSystem {
       this.computing.primitives.updatePosition,
       this.computing.primitives.postProcessingPosition,
       this.rendering.primitives.segments,
-      this.rendering.primitives.trails,
-      this.rendering.primitives.screen
     ];
 
     return primitives;

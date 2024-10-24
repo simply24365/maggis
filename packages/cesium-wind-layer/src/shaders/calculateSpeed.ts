@@ -53,11 +53,37 @@ float interpolateTexture(sampler2D componentTexture, vec2 lonLat) {
     return lon_lat;
 }
 
-vec2 linearInterpolation(vec2 lonLat) {
-    // https://en.wikipedia.org/wiki/Bilinear_interpolation
-    float u = interpolateTexture(U, lonLat);
-    float v = interpolateTexture(V, lonLat);
+vec2 getWindComponents(vec2 lonLat) {
+    vec2 normalizedIndex2D = mapPositionToNormalizedIndex2D(lonLat);
+    float u = texture(U, normalizedIndex2D).r;
+    float v = texture(V, normalizedIndex2D).r;
     return vec2(u, v);
+}
+
+vec2 bilinearInterpolation(vec2 lonLat) {
+    float lon = lonLat.x;
+    float lat = lonLat.y;
+
+    // Calculate grid cell coordinates
+    float lon0 = floor(lon / interval.x) * interval.x;
+    float lon1 = lon0 + interval.x;
+    float lat0 = floor(lat / interval.y) * interval.y;
+    float lat1 = lat0 + interval.y;
+
+    // Get wind vectors at four corners
+    vec2 v00 = getWindComponents(vec2(lon0, lat0));
+    vec2 v10 = getWindComponents(vec2(lon1, lat0));
+    vec2 v01 = getWindComponents(vec2(lon0, lat1));
+    vec2 v11 = getWindComponents(vec2(lon1, lat1));
+
+    // Calculate interpolation weights
+    float s = (lon - lon0) / interval.x;
+    float t = (lat - lat0) / interval.y;
+
+    // Perform bilinear interpolation on vector components
+    vec2 v0 = mix(v00, v10, s);
+    vec2 v1 = mix(v01, v11, s);
+    return mix(v0, v1, t);
 }
 
 vec2 lengthOfLonLat(vec2 lonLat) {
@@ -95,9 +121,9 @@ vec2 calculateSpeedByRungeKutta2(vec2 lonLat) {
     const float h = 0.5;
 
     vec2 y_n = lonLat;
-    vec2 f_n = linearInterpolation(lonLat);
+    vec2 f_n = bilinearInterpolation(lonLat);
     vec2 midpoint = y_n + 0.5 * h * convertSpeedUnitToLonLat(y_n, f_n) * speedScaleFactor;
-    vec2 speed = h * linearInterpolation(midpoint) * speedScaleFactor;
+    vec2 speed = h * bilinearInterpolation(midpoint) * speedScaleFactor;
 
     return speed;
 }
@@ -123,7 +149,7 @@ out vec4 fragColor;
 void main() {
     // texture coordinate must be normalized
     vec2 lonLat = texture(currentParticlesPosition, v_textureCoordinates).rg;
-    vec2 speedOrigin = linearInterpolation(lonLat);
+    vec2 speedOrigin = bilinearInterpolation(lonLat);
     vec2 speed = calculateSpeedByRungeKutta2(lonLat);
     vec2 speedInLonLat = convertSpeedUnitToLonLat(lonLat, speed);
 
