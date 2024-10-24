@@ -5,8 +5,8 @@ import CustomPrimitive from './customPrimitive';
 import { ClearCommand, Color, Pass } from 'cesium';
 
 export class WindParticleSystem {
-  private computing: WindParticlesComputing;
-  private rendering: WindParticlesRendering;
+  computing: WindParticlesComputing;
+  rendering: WindParticlesRendering;
   windData: WindData;
   options: WindLayerOptions;
   viewerParameters: any;
@@ -18,6 +18,7 @@ export class WindParticleSystem {
     this.viewerParameters = viewerParameters;
     this.computing = new WindParticlesComputing(context, windData, options, viewerParameters);
     this.rendering = new WindParticlesRendering(context, options, viewerParameters, this.computing);
+    this.applyViewerParameters(viewerParameters);
   }
 
   getPrimitives(): CustomPrimitive[] {

@@ -2,7 +2,7 @@ import { ShaderSource } from 'cesium';
 import { updatePositionShader } from './shaders/updatePosition';
 import { calculateSpeedShader } from './shaders/calculateSpeed';
 import { postProcessingPositionFragmentShader } from './shaders/postProcessingPosition';
-import { renderParticlesFragmentShader, renderParticlesVertexShader } from './shaders/renderParticles';
+import { renderParticlesFragmentShader, renderParticlesVertexShader } from './shaders/segmentDraw';
 import { fullscreenQuadVertexShader } from './shaders/fullscreenQuad';
 import { trailDrawFragmentShader } from './shaders/trailDraw';
 import { screenDrawFragmentShader } from './shaders/screenDraw';
@@ -20,9 +20,15 @@ export class ShaderManager {
     });
   }
 
-  static getRenderParticlesVertexShader(): ShaderSource {
+  static getSegmentDrawVertexShader(): ShaderSource {
     return new ShaderSource({
       sources: [renderParticlesVertexShader]
+    });
+  }
+
+  static getSegmentDrawFragmentShader(): ShaderSource {
+    return new ShaderSource({
+      sources: [renderParticlesFragmentShader]
     });
   }
 
@@ -39,23 +45,17 @@ export class ShaderManager {
     });
   }
 
-  static getScreenDrawFragmentShader(): ShaderSource {
-    return new ShaderSource({
-      sources: [screenDrawFragmentShader]
-    });
-  }
-
-  static getRenderParticlesFragmentShader(): ShaderSource {
-    return new ShaderSource({
-      defines: ['DISABLE_LOG_DEPTH_FRAGMENT_WRITE'],
-      sources: [renderParticlesFragmentShader]
-    });
-  }
-
   static getTrailDrawFragmentShader(): ShaderSource {
     return new ShaderSource({
       defines: ['DISABLE_LOG_DEPTH_FRAGMENT_WRITE'],
       sources: [trailDrawFragmentShader]
+    });
+  }
+
+  static getScreenDrawFragmentShader(): ShaderSource {
+    return new ShaderSource({
+      defines: ['DISABLE_LOG_DEPTH_FRAGMENT_WRITE'],
+      sources: [screenDrawFragmentShader]
     });
   }
 }

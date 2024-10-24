@@ -17,7 +17,6 @@ const viewer = new Viewer('cesiumContainer', {
   navigationHelpButton: false,
   shouldAnimate: true,
   useBrowserRecommendedResolution: false,
-  orderIndependentTranslucency: false,
   // sceneMode: SceneMode.SCENE2D,
   sceneModePicker: false,
 });
@@ -27,12 +26,12 @@ new SceneModePicker('sceneModePicker', viewer.scene, 0)
 // Define wind layer options
 const options: WindLayerOptions = {
   particleHeight: 1000.0,
-  fadeOpacity: 0.996,
+  fadeOpacity: 0.95,
   dropRate: 0.003,
   dropRateBump: 0.01,
-  speedFactor: 10.0,
-  lineWidth: 6.0,
-  particlesTextureSize: 100,
+  speedFactor: 5.0,
+  lineWidth: 10.0,
+  particlesTextureSize: 256,
   colors: [
     'rgb(36,104, 180)',
     'rgb(60,157, 194)',

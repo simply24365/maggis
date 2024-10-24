@@ -52,7 +52,9 @@ vec3 convertCoordinate(vec2 lonLat) {
 vec4 calculateProjectedCoordinate(vec2 lonLat) {
     if (is3D) {
         vec3 particlePosition = convertCoordinate(lonLat);
-        return czm_modelViewProjection * vec4(particlePosition, 1.0);
+        // 使用 modelViewProjection 矩阵进行投影变换
+        vec4 projectedPosition = czm_modelViewProjection * vec4(particlePosition, 1.0);
+        return projectedPosition;
     } else {
         vec3 position2D = vec3(radians(lonLat.x), radians(lonLat.y), 0.0);
         return czm_modelViewProjection * vec4(position2D, 1.0);

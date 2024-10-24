@@ -6,7 +6,6 @@ import {
   Cartesian3,
   BoundingSphere,
   Ellipsoid,
-  Math as CesiumMath,
   SceneMode
 } from 'cesium';
 
@@ -67,6 +66,7 @@ export class WindLayer {
     this.postUpdateEvent = new Event();
 
     this.particleSystem = new WindParticleSystem(this.scene.context, windData, this.options, this.viewerParameters);
+    this.particleSystem.applyViewerParameters(this.viewerParameters);
     console.log('Particle system created:', this.particleSystem);
     this.addPrimitives();
 
@@ -93,10 +93,12 @@ export class WindLayer {
   }
 
   private onMoveStart(): void {
+    this.particleSystem.rendering.moving = true;
     this.updatePrimitivesVisibility(false);
   }
 
   private onMoveEnd(): void {
+    this.particleSystem.rendering.moving = false;
     this.updateViewerParameters();
     this.particleSystem.applyViewerParameters(this.viewerParameters);
     this.updatePrimitivesVisibility(true);
@@ -118,25 +120,8 @@ export class WindLayer {
   }
 
   private updateViewerParameters(): void {
-    const viewRectangle = this.viewer.camera.computeViewRectangle();
-    if (viewRectangle) {
-      const minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
-      const maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
-      const minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
-      const maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
-      // 计算经纬度范围的交集
-      const lonRange = new Cartesian2(
-        Math.max(this.windData.bounds.west, minLon),
-        Math.min(this.windData.bounds.east, maxLon)
-      );
-      const latRange = new Cartesian2(
-        Math.max(this.windData.bounds.south, minLat),
-        Math.min(this.windData.bounds.north, maxLat)
-      );
-      this.viewerParameters.lonRange = lonRange;
-      this.viewerParameters.latRange = latRange;
-    }
-
+    this.viewerParameters.latRange = new Cartesian2(this.windData.bounds.south, this.windData.bounds.north);
+    this.viewerParameters.lonRange = new Cartesian2(this.windData.bounds.west, this.windData.bounds.east);
     const pixelSize = this.viewer.camera.getPixelSize(
       new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
       this.viewer.scene.drawingBufferWidth,

@@ -13,6 +13,7 @@ export class WindParticlesRendering {
   private colorTable: Texture;
   textures: ReturnType<typeof this.createRenderingTextures>;
   framebuffers: ReturnType<typeof this.createRenderingFramebuffers>;
+  moving: boolean = false;
   constructor(context: any, options: WindLayerOptions, viewerParameters: any, computing: WindParticlesComputing) {
     this.context = context;
     this.options = options;
@@ -210,7 +211,13 @@ export class WindParticlesRendering {
     depthMask?: any;
     blending?: any;
   }): any {
-    return (Appearance as any).getDefaultRenderState(true, false, options);
+    return (Appearance as any).getDefaultRenderState(true, false, {
+      viewport: undefined,
+      depthTest: undefined,
+      depthMask: undefined,
+      blending: undefined,
+      ...options
+    });
   }
 
   private createPrimitives() {
@@ -234,8 +241,8 @@ export class WindParticlesRendering {
         lineWidth: () => this.options.lineWidth,
         is3D: () => this.viewerParameters.sceneMode === SceneMode.SCENE3D,
       },
-      vertexShaderSource: ShaderManager.getRenderParticlesVertexShader(),
-      fragmentShaderSource: ShaderManager.getRenderParticlesFragmentShader(),
+      vertexShaderSource: ShaderManager.getSegmentDrawVertexShader(),
+      fragmentShaderSource: ShaderManager.getSegmentDrawFragmentShader(),
       rawRenderState: this.createRawRenderState({
         viewport: undefined,
         depthTest: {
@@ -260,6 +267,7 @@ export class WindParticlesRendering {
         segmentsDepthTexture: () => this.textures.segmentsDepth,
         currentTrailsColor: () => this.framebuffers.currentTrails.getColorTexture(0),
         trailsDepthTexture: () => this.framebuffers.currentTrails.depthTexture,
+        // Modify fadeOpacity to be 0 when moving
         fadeOpacity: () => this.options.fadeOpacity
       },
       vertexShaderSource: ShaderManager.getFullscreenQuadVertexShader(),
