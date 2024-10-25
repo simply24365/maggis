@@ -32,5 +32,5 @@ jobs:
           publish: pnpm run release
         env:
           # Using newer fine-grained PAT is recommended
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
