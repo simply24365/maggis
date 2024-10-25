@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.2.0
+
+### Minor Changes
+
+- options change available
+
 ## 0.1.3
 
 ### Patch Changes
