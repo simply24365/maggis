@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/cesium-wind-layer.svg)](https://www.npmjs.com/package/cesium-wind-layer)
 [![license](https://img.shields.io/npm/l/cesium-wind-layer.svg)](https://github.com/your-repo/cesium-wind-layer/blob/main/LICENSE)
 
-一个用于通过粒子动画可视化风场数据的 Cesium 插件。
+一个GPU加速的用于通过粒子动画可视化风场数据的 Cesium 插件。
 
 [English](/packages/cesium-wind-layer/readme.md) | [在线演示](https://cesium-wind-layer.opendde.com/)
 
