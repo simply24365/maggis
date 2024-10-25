@@ -2,40 +2,40 @@ import { Cartesian3 } from 'cesium';
 
 export interface WindLayerOptions {
   /**
-   * 粒子纹理大小
+   * Size of the particle texture. Determines the maximum number of particles. Default is 100.
    */
   particlesTextureSize: number;
   /**
-   * 粒子高度，默认为 1000
+   * Height of particles above the ground in meters. Default is 0.
    */
   particleHeight: number;
   /**
-   * 粒子线宽，默认为 2.0
-   * 控制粒子的宽度
+   * Width of particle trails in pixels. Default is 3.0.
+   * Controls the width of the particles.
    */
   lineWidth: number;
   /**
-   * 粒子速度系数，默认为 0.15
-   * 控制粒子移动速度
+   * Factor to adjust the speed of particles. Default is 10.0.
+   * Controls the movement speed of particles.
    */
   speedFactor: number;
   /**
-   * 粒子消失率，默认为 0.003
-   * 控制粒子的生命周期
+   * Rate at which particles are dropped (reset). Default is 0.003.
+   * Controls the lifecycle of particles.
    */
   dropRate: number;
   /**
-   * 粒子消失率增量，默认为 0.001
-   * 当粒子移动速度较慢时增加消失概率
+   * Additional drop rate for slow-moving particles. Default is 0.001.
+   * Increases the probability of dropping particles when they move slowly.
    */
   dropRateBump: number;
   /**
-   * 是否翻转Y轴，默认为 false
+   * Whether to flip the Y-axis of the wind data. Default is false.
    */
   flipY: boolean;
   /**
-   * 颜色列表，用于生成颜色表
-   * 默认为 ['rgb(4, 14, 216)', 'rgb(32, 243, 150)']
+   * Array of colors for particles. Can be used to create color gradients.
+   * Default is ['white'].
    */
   colors: string[];
 }

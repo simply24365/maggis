@@ -33,7 +33,7 @@ export class WindLayer {
     particlesTextureSize: 100,
     particleHeight: 0,
     lineWidth: 3.0,
-    speedFactor: 0.15,
+    speedFactor: 10,
     dropRate: 0.003,
     dropRateBump: 0.001,
     colors: ['white'],
@@ -59,6 +59,22 @@ export class WindLayer {
   private resizeFun: () => void;
   private preRenderFun: () => void;
 
+  /**
+   * WindLayer class for visualizing wind field data with particle animation in Cesium.
+   * 
+   * @class
+   * @param {Viewer} viewer - The Cesium viewer instance.
+   * @param {WindData} windData - The wind field data to visualize.
+   * @param {Partial<WindLayerOptions>} [options] - Optional configuration options for the wind layer.
+   * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles.
+   * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
+   * @param {number} [options.lineWidth=3.0] - Width of particle trails in pixels.
+   * @param {number} [options.speedFactor=10.0] - Factor to adjust the speed of particles.
+   * @param {number} [options.dropRate=0.003] - Rate at which particles are dropped (reset).
+   * @param {number} [options.dropRateBump=0.001] - Additional drop rate for slow-moving particles.
+   * @param {string[]} [options.colors=['white']] - Array of colors for particles. Can be used to create color gradients.
+   * @param {boolean} [options.flipY=false] - Whether to flip the Y-axis of the wind data.
+   */
   constructor(viewer: Viewer, windData: WindData, options?: Partial<WindLayerOptions>) {
     this.show = true;
     this.viewer = viewer;

@@ -24,12 +24,7 @@ const viewer = new Viewer('cesiumContainer', {
 new SceneModePicker('sceneModePicker', viewer.scene, 0)
 
 // Define wind layer options
-const options: WindLayerOptions = {
-  particleHeight: 1000.0,
-  dropRate: 0.003,
-  dropRateBump: 0.01,
-  speedFactor: 5.0,
-  lineWidth: 5.0,
+const options: Partial<WindLayerOptions> = {
   particlesTextureSize: 200,
   colors: [
     "rgb(110, 64, 170)",
