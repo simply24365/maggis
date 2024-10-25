@@ -1,6 +1,6 @@
 {
   "name": "cesium-wind-layer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": {
     "access": "public"
   },
@@ -22,5 +22,13 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hongfaqiu/cesium-wind-layer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hongfaqiu/cesium-wind-layer/issues"
+  },
+  "homepage": "https://github.com/hongfaqiu/cesium-wind-layer#readme"
 }

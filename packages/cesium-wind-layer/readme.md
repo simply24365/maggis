@@ -1,24 +1,39 @@
 # Cesium Wind Layer
 
+[![npm version](https://img.shields.io/npm/v/cesium-wind-layer.svg)](https://www.npmjs.com/package/cesium-wind-layer)
+[![license](https://img.shields.io/npm/l/cesium-wind-layer.svg)](https://github.com/your-repo/cesium-wind-layer/blob/main/LICENSE)
+
 A Cesium plugin for visualizing wind field data with particle animation.
+
+[中文文档](/packages/cesium-wind-layer/readme.zh-CN.md) | [Live Demo](https://cesium-wind-layer.opendde.com/)
 
 ![Wind Layer Demo](/pictures/wind.gif)
 
-## Features
+## 📚 Table of Contents
 
-- Real-time wind field visualization using particle system
-- GPU-accelerated particle computation and rendering
-- Customizable particle appearance and behavior
-- Support for both 2D and 3D views
-- Compatible with Cesium 3D globe
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API Reference](#api-reference)
+- [License](#license)
 
-## Installation
+## ✨ Features
+
+- ⚡️ Real-time wind field visualization using particle system
+- 🚀 GPU-accelerated particle computation and rendering
+- 🎨 Customizable particle appearance and behavior
+- 🌍 Support for both 2D and 3D views
+- 🔄 Compatible with Cesium 3D globe
+
+## 📦 Installation
 
 ```bash
 pnpm add cesium-wind-layer
 ```
 
-## Usage
+## 🚀 Usage
+
+### Basic Example
 
 ```typescript
 import { Viewer } from 'cesium';
@@ -62,7 +77,7 @@ const windLayer = new WindLayer(viewer, windData, {
 });
 ```
 
-## API Reference
+## 📖 API Reference
 
 ### WindLayer
 
@@ -85,10 +100,12 @@ interface WindLayerOptions {
 
 #### Methods
 
-- `show: boolean` - Show/hide the wind layer
-- `updateWindData(data: WindData)` - Update wind field data
-- `destroy()` - Clean up resources
+| Method | Description |
+|--------|-------------|
+| `show: boolean` | Show/hide the wind layer |
+| `updateWindData(data: WindData)` | Update wind field data |
+| `destroy()` | Clean up resources |
 
-## License
+## 📄 License
 
-MIT
+[MIT](/LICENSE)
