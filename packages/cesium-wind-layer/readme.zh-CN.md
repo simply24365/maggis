@@ -7,9 +7,9 @@
 
 [English](/packages/cesium-wind-layer/readme.md) | [在线演示](https://cesium-wind-layer.opendde.com/)
 
-<div style="display: flex; justify-content: space-between;">
-  <img src="/pictures/wind.gif" alt="Wind Layer Demo" style="width: 48%;">
-  <img src="/pictures/terrain.gif" alt="Terrain Demo" style="width: 48%;">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+  <img src="/pictures/wind.gif" alt="Wind Layer Demo" style="width: 100%; height: 100%; object-fit: cover;">
+  <img src="/pictures/terrain.gif" alt="Terrain Demo" style="width: 100%; height: 100%; object-fit: cover;">
 </div>
 
 ## 📚 目录
