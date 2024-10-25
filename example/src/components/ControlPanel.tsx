@@ -6,6 +6,7 @@ import ColorTableInput from './ColorTableInput';
 import styled from 'styled-components';
 import { GithubOutlined } from '@ant-design/icons';
 import { ZoomInOutlined } from '@ant-design/icons';
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -252,6 +253,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   });
   
   const [collapsed, setCollapsed] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     setOptions({
@@ -286,6 +288,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <CardTitle onClick={() => setCollapsed(!collapsed)}>
             <TitleText>Wind Layer Controls</TitleText>
             <TitleActions>
+              <TitleButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setVisible(!visible);
+                  if (windLayer) {
+                    windLayer.show = !visible;
+                  }
+                }}
+                title={visible ? "Hide Wind Layer" : "Show Wind Layer"}
+              >
+                {visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              </TitleButton>
               <TitleButton
                 onClick={(e) => {
                   e.stopPropagation();
@@ -350,7 +364,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Width of particle trails in pixels. Controls the width of the particles.'
                 )}
               >
-                <Slider min={0.1} max={10} step={0.1} />
+                <Slider min={0.1} max={100} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -414,21 +428,17 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </CompactFormItem>
 
               <CompactFormItem
+                name="useViewerBounds"
                 label={renderLabel(
-                  'Layer Visibility',
-                  'Toggle the visibility of the wind layer'
+                  'Use Viewer Bounds',
+                  'Generate particles within the current view bounds instead of the entire wind field.'
                 )}
+                valuePropName="checked"
               >
                 <Switch
-                  defaultChecked
                   size="small"
-                  onChange={(checked: boolean) => {
-                    if (windLayer) {
-                      windLayer.show = checked;
-                    }
-                  }}
-                  checkedChildren="Visible"
-                  unCheckedChildren="Hidden"
+                  checkedChildren="View Bounds"
+                  unCheckedChildren="Global"
                 />
               </CompactFormItem>
               

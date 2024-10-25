@@ -10,7 +10,7 @@ export interface WindLayerOptions {
    */
   particleHeight: number;
   /**
-   * Width of particle trails in pixels. Default is 3.0.
+   * Width of particle trails in pixels. Default is 10.0.
    * Controls the width of the particles.
    */
   lineWidth: number;
@@ -38,6 +38,10 @@ export interface WindLayerOptions {
    * Default is ['white'].
    */
   colors: string[];
+  /**
+   * Whether to use the viewer bounds to generate particles. Default is false.
+   */
+  useViewerBounds?: boolean;
 }
 
 export interface WindDataDemention {

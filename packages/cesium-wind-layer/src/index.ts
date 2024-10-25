@@ -2,7 +2,6 @@ import {
   Viewer,
   Scene,
   Cartesian2,
-  Event,
   Cartesian3,
   BoundingSphere,
   Ellipsoid,
@@ -33,12 +32,13 @@ export class WindLayer {
   static defaultOptions: WindLayerOptions = {
     particlesTextureSize: 100,
     particleHeight: 0,
-    lineWidth: 3.0,
+    lineWidth: 10.0,
     speedFactor: 10,
     dropRate: 0.003,
     dropRateBump: 0.001,
     colors: ['white'],
-    flipY: false
+    flipY: false,
+    useViewerBounds: false // 默认使用全局范围
   }
 
   viewer: Viewer;
@@ -51,14 +51,8 @@ export class WindLayer {
     pixelSize: number;
     sceneMode: SceneMode;
   };
-  private preUpdateEvent: Event;
-  private postUpdateEvent: Event;
   private _isDestroyed: boolean = false;
   private primitives: any[] = [];
-  private moveStartFun: () => void;
-  private moveEndFun: () => void;
-  private resizeFun: () => void;
-  private preRenderFun: () => void;
 
   /**
    * WindLayer class for visualizing wind field data with particle animation in Cesium.
@@ -75,6 +69,7 @@ export class WindLayer {
    * @param {number} [options.dropRateBump=0.001] - Additional drop rate for slow-moving particles.
    * @param {string[]} [options.colors=['white']] - Array of colors for particles. Can be used to create color gradients.
    * @param {boolean} [options.flipY=false] - Whether to flip the Y-axis of the wind data.
+   * @param {boolean} [options.useViewerBounds=false] - Whether to use the viewer bounds to generate particles.
    */
   constructor(viewer: Viewer, windData: WindData, options?: Partial<WindLayerOptions>) {
     this.show = true;
@@ -84,63 +79,29 @@ export class WindLayer {
     this.windData = windData;
 
     this.viewerParameters = {
-      lonRange: new Cartesian2(0, 0),
-      latRange: new Cartesian2(0, 0),
-      pixelSize: 0.0,
+      lonRange: new Cartesian2(-180, 180),
+      latRange: new Cartesian2(-90, 90),
+      pixelSize: 2000.0,
       sceneMode: this.scene.mode
     };
     this.updateViewerParameters();
 
-    this.preUpdateEvent = new Event();
-    this.postUpdateEvent = new Event();
-
     this.particleSystem = new WindParticleSystem(this.scene.context, windData, this.options, this.viewerParameters);
-    this.particleSystem.applyViewerParameters(this.viewerParameters);
     this.add();
-
-    this.moveStartFun = this.onMoveStart.bind(this);
-    this.moveEndFun = this.onMoveEnd.bind(this);
-    this.resizeFun = this.onResize.bind(this);
-    this.preRenderFun = this.onPreRender.bind(this);
 
     this.setupEventListeners();
   }
 
   private setupEventListeners(): void {
-    this.viewer.camera.moveStart.addEventListener(this.moveStartFun);
-    this.viewer.camera.moveEnd.addEventListener(this.moveEndFun);
-    this.scene.preRender.addEventListener(this.preRenderFun);
-    window.addEventListener("resize", this.resizeFun);
+    this.viewer.camera.changed.addEventListener(this.updateViewerParameters.bind(this));
+    this.scene.morphComplete.addEventListener(this.updateViewerParameters.bind(this));
+    window.addEventListener("resize", this.updateViewerParameters.bind(this));
   }
 
   private removeEventListeners(): void {
-    this.viewer.camera.moveStart.removeEventListener(this.moveStartFun);
-    this.viewer.camera.moveEnd.removeEventListener(this.moveEndFun);
-    window.removeEventListener("resize", this.resizeFun);
-    this.scene.preRender.removeEventListener(this.preRenderFun);
-  }
-
-  private onMoveStart(): void {
-  }
-
-  private onMoveEnd(): void {
-    // this.updateViewerParameters();
-    // this.particleSystem.applyViewerParameters(this.viewerParameters);
-  }
-
-  private onResize(): void {
-    this._resized = true;
-    this.remove();
-  }
-
-  private onPreRender(): void {
-    this.preUpdateEvent.raiseEvent();
-    this.postUpdateEvent.raiseEvent();
-    if (this._resized) {
-      this.particleSystem.canvasResize(this.scene.context);
-      this.add();
-      this._resized = false;
-    }
+    this.viewer.camera.changed.removeEventListener(this.updateViewerParameters.bind(this));
+    this.scene.morphComplete.removeEventListener(this.updateViewerParameters.bind(this));
+    window.removeEventListener("resize", this.updateViewerParameters.bind(this));
   }
 
   private updateViewerParameters(): void {
@@ -163,16 +124,19 @@ export class WindLayer {
       this.viewerParameters.latRange = latRange;
     }
 
-    const pixelSize = this.viewer.camera.getPixelSize(
+    const rawPixelSize = this.viewer.camera.getPixelSize(
       new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
       this.viewer.scene.drawingBufferWidth,
       this.viewer.scene.drawingBufferHeight
     );
+    const pixelSize = rawPixelSize + 100;
+
     if (pixelSize > 0) {
       this.viewerParameters.pixelSize = pixelSize;
     }
 
     this.viewerParameters.sceneMode = this.scene.mode;
+    this.particleSystem?.applyViewerParameters(this.viewerParameters);
   }
 
   /**

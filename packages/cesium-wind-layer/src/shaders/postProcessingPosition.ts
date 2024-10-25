@@ -21,6 +21,9 @@ uniform float randomCoefficient;
 uniform float dropRate;
 uniform float dropRateBump;
 
+// 添加新的 uniform 变量
+uniform bool useViewerBounds;
+
 in vec2 v_textureCoordinates;
 
 vec2 mapPositionToNormalizedIndex2D(vec2 lonLat) {
@@ -58,8 +61,18 @@ bool particleNoSpeed(vec2 particle) {
 }
 
 vec2 generateRandomParticle(vec2 seed) {
-    float randomLon = rand(seed, dataLonRange);
-    float randomLat = rand(-seed, dataLatRange);
+    vec2 range;
+    float randomLon, randomLat;
+    
+    if (useViewerBounds) {
+        // 在当前视域范围内生成粒子
+        randomLon = rand(seed, lonRange);
+        randomLat = rand(-seed, latRange);
+    } else {
+        // 在数据范围内生成粒子
+        randomLon = rand(seed, dataLonRange);
+        randomLat = rand(-seed, dataLatRange);
+    }
 
     return vec2(randomLon, randomLat);
 }

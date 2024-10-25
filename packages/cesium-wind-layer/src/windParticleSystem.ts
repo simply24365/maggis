@@ -18,7 +18,7 @@ export class WindParticleSystem {
     this.viewerParameters = viewerParameters;
     this.computing = new WindParticlesComputing(context, windData, options, viewerParameters);
     this.rendering = new WindParticlesRendering(context, options, viewerParameters, this.computing);
-    this.applyViewerParameters(viewerParameters);
+    this.clearFramebuffers();
   }
 
   getPrimitives(): CustomPrimitive[] {
@@ -36,14 +36,6 @@ export class WindParticleSystem {
     this.computing.updateWindData(data);
   }
 
-  canvasResize(context: any) {
-    this.context = context;
-    this.computing.destroy();
-    this.rendering.destroy();
-    this.computing = new WindParticlesComputing(context, this.windData, this.options, this.viewerParameters);
-    this.rendering = new WindParticlesRendering(context, this.options, this.viewerParameters, this.computing);
-  }
-
   clearFramebuffers() {
     const clearCommand = new ClearCommand({
       color: new Color(0.0, 0.0, 0.0, 0.0),
@@ -56,17 +48,6 @@ export class WindParticleSystem {
       clearCommand.framebuffer = this.rendering.framebuffers[key as keyof typeof this.rendering.framebuffers];
       clearCommand.execute(this.context);
     });
-  }
-
-  private refreshParticles(maxParticlesChanged: boolean) {
-    this.clearFramebuffers();
-
-    this.computing.destroyParticlesTextures();
-    this.computing.createParticlesTextures();
-
-    if (maxParticlesChanged) {
-      this.rendering.onParticlesTextureSizeChange();
-    }
   }
 
   changeOptions(options: Partial<WindLayerOptions>) {
@@ -86,14 +67,18 @@ export class WindParticleSystem {
 
     this.rendering.updateOptions(options);
     this.computing.updateOptions(options);
-    this.refreshParticles(maxParticlesChanged);
+    if (maxParticlesChanged) {
+      this.computing.destroyParticlesTextures();
+      this.computing.createParticlesTextures();
+      this.rendering.onParticlesTextureSizeChange();
+    }
   }
 
   applyViewerParameters(viewerParameters: any): void {
     this.viewerParameters = viewerParameters;
-    this.refreshParticles(false);
+    this.computing.viewerParameters = viewerParameters;
+    this.rendering.viewerParameters = viewerParameters;
   }
-
 
   destroy(): void {
     this.computing.destroy();

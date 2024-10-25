@@ -7,7 +7,7 @@ import { ShaderManager } from './shaderManager';
 export class WindParticlesRendering {
   private context: any;
   private options: WindLayerOptions;
-  private viewerParameters: any;
+  viewerParameters: any;
   private computing: WindParticlesComputing;
   public primitives!: ReturnType<typeof this.createPrimitives>;
   private colorTable: Texture;

@@ -1,5 +1,17 @@
 # cesium-wind-layer
 
+## 0.4.0
+
+### Minor Changes
+
+- feat: add useViewerBounds option and improve UI
+
+  - Add useViewerBounds option to control particle generation range
+  - Move layer visibility control to title bar
+  - Update default line width to 10.0
+  - Add base pixel size offset to prevent particles from being too small
+  - Update types and documentation
+
 ## 0.3.0
 
 ### Minor Changes

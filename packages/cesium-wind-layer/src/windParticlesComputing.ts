@@ -3,6 +3,18 @@ import { WindLayerOptions, WindData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
 
+// Add these at the top of the file
+interface ViewerParameters {
+  lonRange: Cartesian2;
+  latRange: Cartesian2;
+  pixelSize: number;
+  sceneMode: number;
+}
+
+function random(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
+}
+
 export class WindParticlesComputing {
   context: any;
   options: WindLayerOptions;
@@ -25,7 +37,7 @@ export class WindParticlesComputing {
   };
   uTextureData: Float32Array;
   vTextureData: Float32Array;
-  bounds: { west: number; south: number; east: number; north: number; };
+  private bounds: WindData['bounds'];
   windData: WindData;
 
   constructor(context: any, windData: WindData, options: WindLayerOptions, viewerParameters: any) {
@@ -170,7 +182,8 @@ export class WindParticlesComputing {
             return Math.random();
           },
           dropRate: () => this.options.dropRate,
-          dropRateBump: () => this.options.dropRateBump
+          dropRateBump: () => this.options.dropRateBump,
+          useViewerBounds: () => this.options.useViewerBounds // 添加新的 uniform
         },
         fragmentShaderSource: ShaderManager.getPostProcessingPositionShader(),
         outputTexture: this.particlesTextures.postProcessingPosition,
@@ -231,5 +244,27 @@ export class WindParticlesComputing {
     Object.values(this.windTextures).forEach(texture => texture.destroy());
     Object.values(this.particlesTextures).forEach(texture => texture.destroy());
     Object.values(this.primitives).forEach(primitive => primitive.destroy());
+  }
+
+  private generateRandomParticle(maxParticles: number, viewerParameters: ViewerParameters): Float32Array {
+    const array = new Float32Array(4 * maxParticles);
+    for (let i = 0; i < maxParticles; i++) {
+      const index = 4 * i;
+
+      let lon, lat;
+      if (this.options.useViewerBounds) {
+        lon = random(viewerParameters.lonRange.x, viewerParameters.lonRange.y);
+        lat = random(viewerParameters.latRange.x, viewerParameters.latRange.y);
+      } else {
+        lon = random(this.bounds.west, this.bounds.east);
+        lat = random(this.bounds.south, this.bounds.north);
+      }
+
+      array[index] = lon;
+      array[index + 1] = lat;
+      array[index + 2] = 0;
+      array[index + 3] = 0;
+    }
+    return array;
   }
 }

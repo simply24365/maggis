@@ -19,7 +19,7 @@ const defaultOptions: Partial<WindLayerOptions> = {
   particleHeight: 1000,
   dropRateBump: 0.01,
   speedFactor: 10.0,
-  lineWidth: 3.0,
+  lineWidth: 10.0,
   colors: colorSchemes[2].colors,
   flipY: true,
 };
@@ -63,6 +63,8 @@ export function Earth() {
     viewerRef.current.scene.globe.depthTestAgainstTerrain = true;
     // Optional: Add exaggeration to make terrain features more visible
     viewerRef.current.scene.verticalExaggeration = 2;
+    viewerRef.current.sceneModePicker.viewModel.duration = 0;
+    
     // Load wind data
     const loadWindData = async () => {
       // Skip if wind layer already exists or viewer is not initialized

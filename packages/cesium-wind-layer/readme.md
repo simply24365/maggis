@@ -25,7 +25,6 @@ A Cesium plugin for GPU-accelerated visualization of wind field data with partic
 - ⚡️ Real-time wind field visualization using particle system
 - 🚀 GPU-accelerated particle computation and rendering
 - 🎨 Customizable particle appearance and behavior
-- 🌍 Support for both 2D and 3D views
 - 🏔️ Terrain occlusion support, particles are blocked by terrain
 
 ## 📦 Installation
@@ -71,7 +70,7 @@ const windData = {
 const windLayer = new WindLayer(viewer, windData, {
   particlesTextureSize: 100,  // Size of the particle texture. Determines the maximum number of particles (size squared).
   particleHeight: 1000,       // Height of particles above ground
-  lineWidth: 3.0,            // Width of particle trails
+  lineWidth: 10.0,            // Width of particle trails
   speedFactor: 10.0,         // Speed multiplier
   dropRate: 0.003,           // Rate at which particles are dropped
   dropRateBump: 0.001,       // Additional drop rate for slow particles
@@ -92,12 +91,13 @@ Main class for wind visualization.
 interface WindLayerOptions {
   particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). (default: 100)
   particleHeight: number;        // Height of particles (default: 0)
-  lineWidth: number;            // Width of particle lines (default: 3.0)
+  lineWidth: number;            // Width of particle lines (default: 10.0)
   speedFactor: number;          // Speed multiplier (default: 10.0)
   dropRate: number;             // Particle drop rate (default: 0.003)
   dropRateBump: number;         // Additional drop rate (default: 0.001)
   colors: string[];            // Array of colors for particles
   flipY: boolean;              // Flip Y coordinates (default: false)
+  useViewerBounds: boolean;    // Use viewer bounds to generate particles (default: false)
 }
 ```
 
