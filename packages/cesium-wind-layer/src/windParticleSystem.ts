@@ -69,17 +69,23 @@ export class WindParticleSystem {
     }
   }
 
-  changeOptions(options: WindLayerOptions) {
+  changeOptions(options: Partial<WindLayerOptions>) {
     let maxParticlesChanged = false;
-    if (this.options.particlesTextureSize != options.particlesTextureSize) {
+    if (this.options.particlesTextureSize && this.options.particlesTextureSize !== options.particlesTextureSize) {
       maxParticlesChanged = true;
     }
 
-    this.options = {
+    const newOptions = {
       ...this.options,
       ...options
     }
+    if (newOptions.particlesTextureSize < 1) {
+      throw new Error('particlesTextureSize must be greater than 0');
+    }
+    this.options = newOptions;
 
+    this.rendering.updateOptions(options);
+    this.computing.updateOptions(options);
     this.refreshParticles(maxParticlesChanged);
   }
 

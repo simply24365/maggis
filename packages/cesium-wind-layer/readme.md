@@ -102,9 +102,13 @@ interface WindLayerOptions {
 
 | Method | Description |
 |--------|-------------|
-| `show: boolean` | Show/hide the wind layer |
-| `updateWindData(data: WindData)` | Update wind field data |
-| `destroy()` | Clean up resources |
+| `add()` | Add the wind layer to the scene |
+| `remove()` | Remove the wind layer from the scene |
+| `show: boolean` | Get or set the visibility of the wind layer |
+| `updateWindData(data: WindData)` | Update the wind field data |
+| `updateOptions(options: Partial<WindLayerOptions>)` | Update the options of the wind layer |
+| `isDestroyed(): boolean` | Check if the wind layer has been destroyed |
+| `destroy()` | Clean up resources and destroy the wind layer |
 
 ## 📄 License
 

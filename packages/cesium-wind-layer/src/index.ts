@@ -25,7 +25,7 @@ export class WindLayer {
   set show(value: boolean) {
     if (this._show !== value) {
       this._show = value;
-      this.updatePrimitivesVisibility();
+      this.updatePrimitivesVisibility(value);
     }
   }
 
@@ -40,9 +40,9 @@ export class WindLayer {
     flipY: false
   }
 
-  private viewer: Viewer;
-  private scene: Scene;
-  private options: WindLayerOptions;
+  viewer: Viewer;
+  scene: Scene;
+  options: WindLayerOptions;
   private particleSystem: WindParticleSystem;
   private viewerParameters: {
     lonRange: Cartesian2;
@@ -95,8 +95,7 @@ export class WindLayer {
 
     this.particleSystem = new WindParticleSystem(this.scene.context, windData, this.options, this.viewerParameters);
     this.particleSystem.applyViewerParameters(this.viewerParameters);
-    console.log('Particle system created:', this.particleSystem);
-    this.addPrimitives();
+    this.add();
 
     this.moveStartFun = this.onMoveStart.bind(this);
     this.moveEndFun = this.onMoveEnd.bind(this);
@@ -138,7 +137,7 @@ export class WindLayer {
     this.postUpdateEvent.raiseEvent();
     if (this._resized) {
       this.particleSystem.canvasResize(this.scene.context);
-      this.addPrimitives();
+      this.add();
       this._resized = false;
     }
   }
@@ -175,17 +174,30 @@ export class WindLayer {
     this.viewerParameters.sceneMode = this.scene.mode;
   }
 
+  /**
+   * Update the wind data of the wind layer.
+   * @param {WindData} data - The new wind data to apply.
+   */
   updateWindData(data: WindData): void {
     this.particleSystem.updateWindData(data);
     this.viewer.scene.requestRender();
   }
 
-  private addPrimitives(): void {
+  /**
+   * Update the options of the wind layer.
+   * @param {Partial<WindLayerOptions>} options - The new options to apply.
+   */
+  updateOptions(options: Partial<WindLayerOptions>): void {
+    this.options = { ...this.options, ...options };
+    this.particleSystem.changeOptions(options);
+    this.viewer.scene.requestRender();
+  }
+
+  add(): void {
     this.primitives = this.particleSystem.getPrimitives();
     this.primitives.forEach(primitive => {
       this.scene.primitives.add(primitive);
     });
-    this.updatePrimitivesVisibility();
   }
 
   remove(): void {

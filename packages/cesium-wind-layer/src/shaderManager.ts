@@ -4,7 +4,6 @@ import { calculateSpeedShader } from './shaders/calculateSpeed';
 import { postProcessingPositionFragmentShader } from './shaders/postProcessingPosition';
 import { renderParticlesFragmentShader, renderParticlesVertexShader } from './shaders/segmentDraw';
 import { fullscreenQuadVertexShader } from './shaders/fullscreenQuad';
-import { trailDrawFragmentShader } from './shaders/trailDraw';
 import { screenDrawFragmentShader } from './shaders/screenDraw';
 
 export class ShaderManager {
@@ -42,13 +41,6 @@ export class ShaderManager {
     return new ShaderSource({
       defines: ['DISABLE_GL_POSITION_LOG_DEPTH'],
       sources: [fullscreenQuadVertexShader]
-    });
-  }
-
-  static getTrailDrawFragmentShader(): ShaderSource {
-    return new ShaderSource({
-      defines: ['DISABLE_LOG_DEPTH_FRAGMENT_WRITE'],
-      sources: [trailDrawFragmentShader]
     });
   }
 

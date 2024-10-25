@@ -190,6 +190,16 @@ export class WindParticlesComputing {
     this.windTextures.V.copyFrom({ source: vTextureData });
   }
 
+  updateOptions(options: Partial<WindLayerOptions>) {
+    const needUpdateWindTextures = options.flipY !== this.options.flipY;
+    this.options = { ...this.options, ...options };
+    if (needUpdateWindTextures) {
+      this.windTextures.U.destroy();
+      this.windTextures.V.destroy();
+      this.createWindTextures();
+    }
+  }
+
   processWindData(data: {
     array: Float32Array;
     min?: number;

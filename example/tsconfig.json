@@ -1,12 +1,11 @@
 {
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "types": [
-      "vite/client"
-    ]
-  },
-  "include": [
-    "src",
-    "cesium-wind-layer.d.ts"
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
   ]
 }

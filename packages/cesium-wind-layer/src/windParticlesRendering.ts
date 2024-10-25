@@ -229,6 +229,24 @@ export class WindParticlesRendering {
     }
   }
 
+  onColorTableChange() {
+    this.colorTable.destroy();
+    this.colorTable = this.createColorTableTexture();
+  }
+
+  updateOptions(options: Partial<WindLayerOptions>) {
+    const needUpdateColorTable = options.colors &&
+      JSON.stringify(options.colors) !== JSON.stringify(this.options.colors);
+
+    // Update options first
+    this.options = { ...this.options, ...options };
+
+    // Then update color table if needed
+    if (needUpdateColorTable) {
+      this.onColorTableChange();
+    }
+  }
+
   destroy(): void {
     Object.values(this.framebuffers).forEach((framebuffer: any) => {
       framebuffer.destroy();
