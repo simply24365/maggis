@@ -66,7 +66,7 @@ const windData = {
 
 // Create wind layer with options
 const windLayer = new WindLayer(viewer, windData, {
-  particlesTextureSize: 256,  // Texture size for particle system
+  particlesTextureSize: 100,  // Size of the particle texture. Determines the maximum number of particles (size squared).
   particleHeight: 1000,       // Height of particles above ground
   lineWidth: 3.0,            // Width of particle trails
   speedFactor: 10.0,         // Speed multiplier
@@ -87,8 +87,8 @@ Main class for wind visualization.
 
 ```typescript
 interface WindLayerOptions {
-  particlesTextureSize: number;  // Size of the particle texture (default: 256)
-  particleHeight: number;        // Height of particles (default: 1000)
+  particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). (default: 100)
+  particleHeight: number;        // Height of particles (default: 0)
   lineWidth: number;            // Width of particle lines (default: 3.0)
   speedFactor: number;          // Speed multiplier (default: 10.0)
   dropRate: number;             // Particle drop rate (default: 0.003)

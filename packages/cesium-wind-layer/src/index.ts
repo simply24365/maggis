@@ -66,7 +66,7 @@ export class WindLayer {
    * @param {Viewer} viewer - The Cesium viewer instance.
    * @param {WindData} windData - The wind field data to visualize.
    * @param {Partial<WindLayerOptions>} [options] - Optional configuration options for the wind layer.
-   * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles.
+   * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles (size squared).
    * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
    * @param {number} [options.lineWidth=3.0] - Width of particle trails in pixels.
    * @param {number} [options.speedFactor=10.0] - Factor to adjust the speed of particles.

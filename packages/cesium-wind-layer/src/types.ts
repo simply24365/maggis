@@ -2,7 +2,7 @@ import { Cartesian3 } from 'cesium';
 
 export interface WindLayerOptions {
   /**
-   * Size of the particle texture. Determines the maximum number of particles. Default is 100.
+   * Size of the particle texture. Determines the maximum number of particles (size squared). Default is 100.
    */
   particlesTextureSize: number;
   /**
