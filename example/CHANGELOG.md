@@ -1,5 +1,16 @@
 # example
 
+## 0.2.0
+
+### Minor Changes
+
+- feat: Terrain occlusion support & add zoomTo method
+
+### Patch Changes
+
+- Updated dependencies
+  - cesium-wind-layer@0.3.0
+
 ## 0.1.0
 
 ### Minor Changes
