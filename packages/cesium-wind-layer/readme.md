@@ -7,10 +7,9 @@ A Cesium plugin for GPU-accelerated visualization of wind field data with partic
 
 [中文文档](/packages/cesium-wind-layer/readme.zh-CN.md) | [Live Demo](https://cesium-wind-layer.opendde.com/)
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-  <img src="/pictures/wind.gif" alt="Wind Layer Demo" style="width: 100%; height: 100%; object-fit: cover;">
-  <img src="/pictures/terrain.gif" alt="Terrain Demo" style="width: 100%; height: 100%; object-fit: cover;">
-</div>
+| Wind Layer | Terrain Occlusion |
+|-----------------|------------------------|
+| ![Wind Layer Demo](/pictures/wind.gif) | ![Terrain Occlusion Demo](/pictures/terrain.gif) |
 
 ## 📚 Table of Contents
 
