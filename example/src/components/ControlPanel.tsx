@@ -5,6 +5,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import ColorTableInput from './ColorTableInput';
 import styled from 'styled-components';
 import { GithubOutlined } from '@ant-design/icons';
+import { ZoomInOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -125,13 +126,10 @@ const CardTitle = styled.div`
   &:hover {
     opacity: 0.8;
   }
-  
-  span {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+`;
+
+const TitleText = styled.span`
+  flex: 1;
 `;
 
 const ControlPanelContainer = styled.div`
@@ -210,6 +208,35 @@ const GithubLink = () => (
   </GithubBadge>
 );
 
+const TitleActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const TitleButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.45);
+  transition: all 0.3s;
+  
+  &:hover {
+    color: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.04);
+  }
+  
+  &:active {
+    background: rgba(0, 0, 0, 0.08);
+  }
+`;
+
 interface ControlPanelProps {
   windLayer: WindLayer | null;
   initialOptions?: Partial<WindLayerOptions>;
@@ -231,7 +258,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       ...WindLayer.defaultOptions,
       ...initialOptions,
     });
-  }, [windLayer]);
+  }, [windLayer, initialOptions]);
 
   const renderLabel = (label: string, tooltip: string) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -257,17 +284,28 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <StyledCard
         title={
           <CardTitle onClick={() => setCollapsed(!collapsed)}>
-            <span>Wind Layer Controls</span>
-            <CollapseButton $collapsed={collapsed}>
-              <svg
-                viewBox="0 0 24 24"
-                width="12"
-                height="12"
-                fill="currentColor"
+            <TitleText>Wind Layer Controls</TitleText>
+            <TitleActions>
+              <TitleButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  windLayer?.zoomTo(1);
+                }}
+                title="Zoom to Wind Field"
               >
-                <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
-              </svg>
-            </CollapseButton>
+                <ZoomInOutlined />
+              </TitleButton>
+              <CollapseButton $collapsed={collapsed}>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="12"
+                  height="12"
+                  fill="currentColor"
+                >
+                  <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
+                </svg>
+              </CollapseButton>
+            </TitleActions>
           </CardTitle>
         }
         size="small"
@@ -302,7 +340,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Height of particles above the ground in meters.'
                 )}
               >
-                <Slider min={0} max={100000} step={100} />
+                <Slider min={-1000} max={10000} step={100} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -312,7 +350,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Width of particle trails in pixels. Controls the width of the particles.'
                 )}
               >
-                <Slider min={1} max={10} step={0.5} />
+                <Slider min={0.1} max={10} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem

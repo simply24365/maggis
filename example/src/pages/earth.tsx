@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Viewer, Rectangle, ArcGisMapServerImageryProvider, ImageryLayer } from 'cesium';
+import { Viewer, Rectangle, ArcGisMapServerImageryProvider, ImageryLayer, Ion, CesiumTerrainProvider } from 'cesium';
 import { WindLayer, WindLayerOptions, WindData } from 'cesium-wind-layer';
 import { ControlPanel } from '@/components/ControlPanel';
 import styled from 'styled-components';
 import { colorSchemes } from '@/components/ColorTableInput';
+
+Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhY2IzNzQzNi1iOTVkLTRkZjItOWVkZi1iMGUyYTUxN2Q5YzYiLCJpZCI6NTUwODUsImlhdCI6MTcyNTQyMDE4NX0.yHbHpszFexPrxX6_55y0RgNrHjBQNu9eYkW9cXKUTPk';
 
 const CesiumContainer = styled.div`
   width: 100vw;
@@ -14,6 +16,7 @@ const CesiumContainer = styled.div`
 const defaultOptions: Partial<WindLayerOptions> = {
   particlesTextureSize: 200,
   dropRate: 0.003,
+  particleHeight: 1000,
   dropRateBump: 0.01,
   speedFactor: 10.0,
   lineWidth: 3.0,
@@ -50,7 +53,16 @@ export function Earth() {
         sceneModePicker: true,
       });
     }
+    // Add terrain
+    CesiumTerrainProvider.fromIonAssetId(1).then(terrainProvider => {
+      if (viewerRef.current) {
+        viewerRef.current.terrainProvider = terrainProvider;
+      }
+    });
 
+    viewerRef.current.scene.globe.depthTestAgainstTerrain = true;
+    // Optional: Add exaggeration to make terrain features more visible
+    viewerRef.current.scene.verticalExaggeration = 2;
     // Load wind data
     const loadWindData = async () => {
       // Skip if wind layer already exists or viewer is not initialized

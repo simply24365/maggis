@@ -7,7 +7,10 @@
 
 [English](/packages/cesium-wind-layer/readme.md) | [在线演示](https://cesium-wind-layer.opendde.com/)
 
-![Wind Layer Demo](/pictures/wind.gif)
+<div style="display: flex; justify-content: space-between;">
+  <img src="/pictures/wind.gif" alt="Wind Layer Demo" style="width: 48%;">
+  <img src="/pictures/terrain.gif" alt="Terrain Demo" style="width: 48%;">
+</div>
 
 ## 📚 目录
 
@@ -23,7 +26,7 @@
 - 🚀 GPU 加速的粒子计算和渲染
 - 🎨 可自定义粒子外观和行为
 - 🌍 支持 2D 和 3D 视图
-- 🔄 兼容 Cesium 3D 地球
+- 🏔️ 支持地形遮挡，粒子会被地形阻挡
 
 ## 📦 安装
 
@@ -107,6 +110,7 @@ interface WindLayerOptions {
 | `show: boolean` | 获取或设置风场图层的可见性 |
 | `updateWindData(data: WindData)` | 更新风场数据 |
 | `updateOptions(options: Partial<WindLayerOptions>)` | 更新风场图层的选项 |
+| `zoomTo(duration?: number)` | 缩放相机以适应风场范围 |
 | `isDestroyed(): boolean` | 检查风场图层是否已被销毁 |
 | `destroy()` | 清理资源并销毁风场图层 |
 

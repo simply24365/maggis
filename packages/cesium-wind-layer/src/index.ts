@@ -7,7 +7,8 @@ import {
   BoundingSphere,
   Ellipsoid,
   SceneMode,
-  Math as CesiumMath
+  Math as CesiumMath,
+  Rectangle
 } from 'cesium';
 
 import { WindLayerOptions, WindData } from './types';
@@ -191,6 +192,21 @@ export class WindLayer {
     this.options = { ...this.options, ...options };
     this.particleSystem.changeOptions(options);
     this.viewer.scene.requestRender();
+  }
+
+  zoomTo(duration: number = 0): void {
+    if (this.windData.bounds) {
+      const rectangle = Rectangle.fromDegrees(
+        this.windData.bounds.west,
+        this.windData.bounds.south,
+        this.windData.bounds.east,
+        this.windData.bounds.north
+      );
+      this.viewer.camera.flyTo({
+        destination: rectangle,
+        duration,
+      });
+    }
   }
 
   add(): void {

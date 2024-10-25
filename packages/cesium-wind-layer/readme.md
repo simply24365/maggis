@@ -7,7 +7,10 @@ A Cesium plugin for GPU-accelerated visualization of wind field data with partic
 
 [中文文档](/packages/cesium-wind-layer/readme.zh-CN.md) | [Live Demo](https://cesium-wind-layer.opendde.com/)
 
-![Wind Layer Demo](/pictures/wind.gif)
+<div style="display: flex; justify-content: space-between;">
+  <img src="/pictures/wind.gif" alt="Wind Layer Demo" style="width: 48%;">
+  <img src="/pictures/terrain.gif" alt="Terrain Demo" style="width: 48%;">
+</div>
 
 ## 📚 Table of Contents
 
@@ -23,7 +26,7 @@ A Cesium plugin for GPU-accelerated visualization of wind field data with partic
 - 🚀 GPU-accelerated particle computation and rendering
 - 🎨 Customizable particle appearance and behavior
 - 🌍 Support for both 2D and 3D views
-- 🔄 Compatible with Cesium 3D globe
+- 🏔️ Terrain occlusion support, particles are blocked by terrain
 
 ## 📦 Installation
 
@@ -107,6 +110,7 @@ interface WindLayerOptions {
 | `show: boolean` | Get or set the visibility of the wind layer |
 | `updateWindData(data: WindData)` | Update the wind field data |
 | `updateOptions(options: Partial<WindLayerOptions>)` | Update the options of the wind layer |
+| `zoomTo(duration?: number)` | Zoom the camera to fit the wind field extent |
 | `isDestroyed(): boolean` | Check if the wind layer has been destroyed |
 | `destroy()` | Clean up resources and destroy the wind layer |
 
