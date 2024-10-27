@@ -1,10 +1,13 @@
 export const calculateSpeedShader = /*glsl*/`#version 300 es
 
 // the size of UV textures: width = lon, height = lat
-uniform sampler2D U; // eastward wind 
+uniform sampler2D U; // eastward wind
 uniform sampler2D V; // northward wind
 uniform sampler2D currentParticlesPosition; // (lon, lat, lev)
 
+uniform vec2 uRange; // (min, max)
+uniform vec2 vRange; // (min, max)
+uniform vec2 speedRange; // (min, max)
 uniform vec2 dimension; // (lon, lat)
 uniform vec2 minimum; // minimum of each dimension
 uniform vec2 maximum; // maximum of each dimension
@@ -111,17 +114,12 @@ vec2 calculateSpeedByRungeKutta2(vec2 lonLat) {
 
 float calculateWindNorm(vec2 speed) {
     vec3 percent = vec3(0.0);
-    vec2 uRange = vec2(-1.0, 1.0);
-    vec2 vRange = vec2(-1.0, 1.0);
-    if(length(speed.xy) == 0.0){
+    float speedLength = length(speed.xy);
+    if(speedLength == 0.0){
       return 0.0;
     }
 
-    percent.x = (abs(speed.x) - uRange.x) / (uRange.y - uRange.x);
-    percent.y = (abs(speed.y) - vRange.x) / (vRange.y - vRange.x);
-    float norm = length(percent);
-
-    return norm;
+    return (speedLength - speedRange.x) / (speedRange.y - speedRange.x);
 }
 
 out vec4 fragColor;

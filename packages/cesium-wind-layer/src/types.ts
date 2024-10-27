@@ -15,7 +15,7 @@ export interface WindLayerOptions {
    */
   lineWidth: number;
   /**
-   * Factor to adjust the speed of particles. Default is 10.0.
+   * Factor to adjust the speed of particles. Default is 1.0.
    * Controls the movement speed of particles.
    */
   speedFactor: number;
@@ -53,6 +53,7 @@ export interface WindDataDemention {
 export interface WindData {
   u: WindDataDemention;
   v: WindDataDemention;
+  speed?: WindDataDemention;
   width: number;
   height: number;
   bounds: {

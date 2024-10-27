@@ -4,7 +4,6 @@ import { WindLayer, WindLayerOptions } from 'cesium-wind-layer';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import ColorTableInput from './ColorTableInput';
 import styled from 'styled-components';
-import { GithubOutlined } from '@ant-design/icons';
 import { ZoomInOutlined } from '@ant-design/icons';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 
@@ -151,64 +150,6 @@ const ControlPanelContainer = styled.div`
   }
 `;
 
-const GithubBadge = styled.a`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #ffffff;
-  color: #24292e;
-  border-radius: 6px;
-  transition: all 0.3s;
-  text-decoration: none;
-  font-size: 14px;
-  border: 1px solid #e1e4e8;
-  
-  &:hover {
-    background: #f6f8fa;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border-color: #d0d7de;
-  }
-  
-  .github-icon {
-    font-size: 16px;
-    color: #24292e;
-  }
-  
-  .repo-name {
-    color: #0969da;
-    font-weight: 500;
-  }
-  
-  .stats {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-    
-    img {
-      height: 16px;
-    }
-  }
-`;
-
-const GithubLink = () => (
-  <GithubBadge
-    href="https://github.com/hongfaqiu/cesium-wind-layer"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <GithubOutlined className="github-icon" />
-    <span className="repo-name">cesium-wind-layer</span>
-    <div className="stats">
-      <img 
-        src="https://img.shields.io/github/stars/hongfaqiu/cesium-wind-layer?style=flat&logo=github"
-        alt="GitHub stars" 
-      />
-    </div>
-  </GithubBadge>
-);
-
 const TitleActions = styled.div`
   display: flex;
   align-items: center;
@@ -227,6 +168,7 @@ const TitleButton = styled.button`
   cursor: pointer;
   color: rgba(0, 0, 0, 0.45);
   transition: all 0.3s;
+  border-radius: 4px;
   
   &:hover {
     color: rgba(0, 0, 0, 0.85);
@@ -235,6 +177,11 @@ const TitleButton = styled.button`
   
   &:active {
     background: rgba(0, 0, 0, 0.08);
+  }
+
+  // Prevent click event from bubbling up to parent
+  &:focus {
+    outline: none;
   }
 `;
 
@@ -378,7 +325,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Factor to adjust the speed of particles. Controls the movement speed of particles.'
                 )}
               >
-                <Slider min={0.1} max={20} step={0.1} />
+                <Slider min={0.1} max={2} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -445,10 +392,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   unCheckedChildren="Global"
                 />
               </CompactFormItem>
-              
-              <div style={{ marginTop: 8 }}>
-                <GithubLink />
-              </div>
             </Space>
           </Form>
         </CardContent>

@@ -70,7 +70,7 @@ const windLayer = new WindLayer(viewer, windData, {
   particlesTextureSize: 100,  // Size of the particle texture. Determines the maximum number of particles (size squared).
   particleHeight: 1000,       // Height of particles above ground
   lineWidth: 10.0,            // Width of particle trails
-  speedFactor: 10.0,         // Speed multiplier
+  speedFactor: 1.0,         // Speed multiplier
   dropRate: 0.003,           // Rate at which particles are dropped
   dropRateBump: 0.001,       // Additional drop rate for slow particles
   colors: ['white'],         // Colors for particles
@@ -91,7 +91,7 @@ interface WindLayerOptions {
   particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). (default: 100)
   particleHeight: number;        // Height of particles (default: 0)
   lineWidth: number;            // Width of particle lines (default: 10.0)
-  speedFactor: number;          // Speed multiplier (default: 10.0)
+  speedFactor: number;          // Speed multiplier (default: 1.0)
   dropRate: number;             // Particle drop rate (default: 0.003)
   dropRateBump: number;         // Additional drop rate (default: 0.001)
   colors: string[];            // Array of colors for particles
@@ -109,6 +109,7 @@ interface WindLayerOptions {
 | `show: boolean` | Get or set the visibility of the wind layer |
 | `updateWindData(data: WindData)` | Update the wind field data |
 | `updateOptions(options: Partial<WindLayerOptions>)` | Update the options of the wind layer |
+| `getDataAtLonLat(lon: number, lat: number): { u: number, v: number, speed: number }` | Get the wind data at a specific longitude and latitude |
 | `zoomTo(duration?: number)` | Zoom the camera to fit the wind field extent |
 | `isDestroyed(): boolean` | Check if the wind layer has been destroyed |
 | `destroy()` | Clean up resources and destroy the wind layer |

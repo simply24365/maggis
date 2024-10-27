@@ -4,12 +4,21 @@ import { WindLayer, WindLayerOptions, WindData } from 'cesium-wind-layer';
 import { ControlPanel } from '@/components/ControlPanel';
 import styled from 'styled-components';
 import { colorSchemes } from '@/components/ColorTableInput';
+import { SpeedQuery } from '@/components/SpeedQuery';
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhY2IzNzQzNi1iOTVkLTRkZjItOWVkZi1iMGUyYTUxN2Q5YzYiLCJpZCI6NTUwODUsImlhdCI6MTcyNTQyMDE4NX0.yHbHpszFexPrxX6_55y0RgNrHjBQNu9eYkW9cXKUTPk';
 
-const CesiumContainer = styled.div`
-  width: 100vw;
+const PageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+`;
+
+const CesiumContainer = styled.div`
+  flex: 1;
+  position: relative;
   overflow: hidden;
 `;
 
@@ -18,9 +27,9 @@ const defaultOptions: Partial<WindLayerOptions> = {
   dropRate: 0.003,
   particleHeight: 1000,
   dropRateBump: 0.01,
-  speedFactor: 10.0,
+  speedFactor: 1.0,
   lineWidth: 10.0,
-  colors: colorSchemes[2].colors,
+  colors: colorSchemes[7].colors,
   flipY: true,
 };
 
@@ -50,7 +59,7 @@ export function Earth() {
         navigationHelpButton: false,
         shouldAnimate: true,
         useBrowserRecommendedResolution: false,
-        sceneModePicker: true,
+        sceneModePicker: false,
       });
     }
     // Add terrain
@@ -63,7 +72,7 @@ export function Earth() {
     viewerRef.current.scene.globe.depthTestAgainstTerrain = true;
     // Optional: Add exaggeration to make terrain features more visible
     viewerRef.current.scene.verticalExaggeration = 2;
-    viewerRef.current.sceneModePicker.viewModel.duration = 0;
+    // viewerRef.current.sceneModePicker.viewModel.duration = 0;
     
     // Load wind data
     const loadWindData = async () => {
@@ -132,11 +141,14 @@ export function Earth() {
   }, []);
 
   return (
-    <CesiumContainer id="cesiumContainer">
-      <ControlPanel
-        windLayer={windLayerRef.current}
-        initialOptions={defaultOptions}
-      />
-    </CesiumContainer>
+    <PageContainer>
+      <SpeedQuery windLayer={windLayerRef.current} viewer={viewerRef.current} />
+      <CesiumContainer id="cesiumContainer">
+        <ControlPanel
+          windLayer={windLayerRef.current}
+          initialOptions={defaultOptions}
+        />
+      </CesiumContainer>
+    </PageContainer>
   );
 }

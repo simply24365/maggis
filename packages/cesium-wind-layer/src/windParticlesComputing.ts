@@ -3,18 +3,6 @@ import { WindLayerOptions, WindData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
 
-// Add these at the top of the file
-interface ViewerParameters {
-  lonRange: Cartesian2;
-  latRange: Cartesian2;
-  pixelSize: number;
-  sceneMode: number;
-}
-
-function random(min: number, max: number): number {
-  return Math.random() * (max - min) + min;
-}
-
 export class WindParticlesComputing {
   context: any;
   options: WindLayerOptions;
@@ -35,20 +23,16 @@ export class WindParticlesComputing {
     updatePosition: CustomPrimitive;
     postProcessingPosition: CustomPrimitive;
   };
-  uTextureData: Float32Array;
-  vTextureData: Float32Array;
   private bounds: WindData['bounds'];
-  windData: WindData;
+  windData: Required<WindData>;
 
-  constructor(context: any, windData: WindData, options: WindLayerOptions, viewerParameters: any) {
+  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
     this.bounds = windData.bounds;
     this.windData = windData;
 
-    this.uTextureData = this.processWindData(windData.u);
-    this.vTextureData = this.processWindData(windData.v);
     this.createWindTextures();
     this.createParticlesTextures();
     this.createComputingPrimitives();
@@ -72,13 +56,13 @@ export class WindParticlesComputing {
       U: new Texture({
         ...options,
         source: {
-          arrayBufferView: this.uTextureData
+          arrayBufferView: new Float32Array(this.windData.u.array)
         }
       }),
       V: new Texture({
         ...options,
         source: {
-          arrayBufferView: this.vTextureData
+          arrayBufferView: new Float32Array(this.windData.v.array)
         }
       }),
     };
@@ -130,8 +114,11 @@ export class WindParticlesComputing {
         uniformMap: {
           U: () => this.windTextures.U,
           V: () => this.windTextures.V,
+          uRange: () => new Cartesian2(this.windData.u.min, this.windData.u.max),
+          vRange: () => new Cartesian2(this.windData.v.min, this.windData.v.max),
+          speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
-          speedScaleFactor: () => (this.viewerParameters.pixelSize + 50) * this.options.speedFactor,
+          speedScaleFactor: () => this.viewerParameters.pixelSize * this.options.speedFactor,
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,
@@ -196,11 +183,10 @@ export class WindParticlesComputing {
     };
   }
 
-  updateWindData(data: WindData) {
-    const uTextureData = this.processWindData(data.u);
-    const vTextureData = this.processWindData(data.v);
-    this.windTextures.U.copyFrom({ source: uTextureData });
-    this.windTextures.V.copyFrom({ source: vTextureData });
+  updateWindData(data: Required<WindData>) {
+    this.windData = data;
+    this.windTextures.U.copyFrom({ source: data.u.array });
+    this.windTextures.V.copyFrom({ source: data.v.array });
   }
 
   updateOptions(options: Partial<WindLayerOptions>) {
@@ -236,7 +222,7 @@ export class WindParticlesComputing {
       const value = array[i] / maxNum; // Normalize to [-1, 1]
       result[i] = value;
     }
-
+    console.log(result)
     return result;
   }
 
@@ -244,27 +230,5 @@ export class WindParticlesComputing {
     Object.values(this.windTextures).forEach(texture => texture.destroy());
     Object.values(this.particlesTextures).forEach(texture => texture.destroy());
     Object.values(this.primitives).forEach(primitive => primitive.destroy());
-  }
-
-  private generateRandomParticle(maxParticles: number, viewerParameters: ViewerParameters): Float32Array {
-    const array = new Float32Array(4 * maxParticles);
-    for (let i = 0; i < maxParticles; i++) {
-      const index = 4 * i;
-
-      let lon, lat;
-      if (this.options.useViewerBounds) {
-        lon = random(viewerParameters.lonRange.x, viewerParameters.lonRange.y);
-        lat = random(viewerParameters.latRange.x, viewerParameters.latRange.y);
-      } else {
-        lon = random(this.bounds.west, this.bounds.east);
-        lat = random(this.bounds.south, this.bounds.north);
-      }
-
-      array[index] = lon;
-      array[index + 1] = lat;
-      array[index + 2] = 0;
-      array[index + 3] = 0;
-    }
-    return array;
   }
 }

@@ -7,13 +7,11 @@ import { ClearCommand, Color, Pass } from 'cesium';
 export class WindParticleSystem {
   computing: WindParticlesComputing;
   rendering: WindParticlesRendering;
-  windData: WindData;
   options: WindLayerOptions;
   viewerParameters: any;
   context: any;
-  constructor(context: any, windData: WindData, options: WindLayerOptions, viewerParameters: any) {
+  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
     this.context = context;
-    this.windData = windData;
     this.options = options;
     this.viewerParameters = viewerParameters;
     this.computing = new WindParticlesComputing(context, windData, options, viewerParameters);
@@ -30,10 +28,6 @@ export class WindParticleSystem {
     ];
 
     return primitives;
-  }
-
-  updateWindData(data: WindData): void {
-    this.computing.updateWindData(data);
   }
 
   clearFramebuffers() {

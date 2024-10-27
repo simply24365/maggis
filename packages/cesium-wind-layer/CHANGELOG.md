@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.4.2
+
+### Patch Changes
+
+- Color correctly represents speed
+
 ## 0.4.1
 
 ### Patch Changes

@@ -16,7 +16,7 @@ import { WindParticleSystem } from './windParticleSystem';
 export class WindLayer {
   private _show: boolean = true;
   private _resized: boolean = false;
-  windData: WindData;
+  windData: Required<WindData>;
 
   get show(): boolean {
     return this._show;
@@ -64,7 +64,7 @@ export class WindLayer {
    * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles (size squared).
    * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
    * @param {number} [options.lineWidth=3.0] - Width of particle trails in pixels.
-   * @param {number} [options.speedFactor=10.0] - Factor to adjust the speed of particles.
+   * @param {number} [options.speedFactor=1.0] - Factor to adjust the speed of particles.
    * @param {number} [options.dropRate=0.003] - Rate at which particles are dropped (reset).
    * @param {number} [options.dropRateBump=0.001] - Additional drop rate for slow-moving particles.
    * @param {string[]} [options.colors=['white']] - Array of colors for particles. Can be used to create color gradients.
@@ -76,7 +76,7 @@ export class WindLayer {
     this.viewer = viewer;
     this.scene = viewer.scene;
     this.options = { ...WindLayer.defaultOptions, ...options };
-    this.windData = windData;
+    this.windData = this.processWindData(windData);
 
     this.viewerParameters = {
       lonRange: new Cartesian2(-180, 180),
@@ -86,7 +86,7 @@ export class WindLayer {
     };
     this.updateViewerParameters();
 
-    this.particleSystem = new WindParticleSystem(this.scene.context, windData, this.options, this.viewerParameters);
+    this.particleSystem = new WindParticleSystem(this.scene.context, this.windData, this.options, this.viewerParameters);
     this.add();
 
     this.setupEventListeners();
@@ -103,6 +103,66 @@ export class WindLayer {
     this.viewer.camera.changed.removeEventListener(this.updateViewerParameters.bind(this));
     this.scene.morphComplete.removeEventListener(this.updateViewerParameters.bind(this));
     window.removeEventListener("resize", this.updateViewerParameters.bind(this));
+  }
+
+  private processWindData(windData: WindData): Required<WindData> {
+    if (windData.speed?.min === undefined || windData.speed?.max === undefined) {
+      console.info('no speed data, calculate speed...');
+      const speed = {
+        array: new Float32Array(windData.u.array.length),
+        min: Number.MAX_VALUE,
+        max: Number.MIN_VALUE
+      };
+      for (let i = 0; i < windData.u.array.length; i++) {
+        speed.array[i] = Math.sqrt(windData.u.array[i] * windData.u.array[i] + windData.v.array[i] * windData.v.array[i]);
+        if (speed.array[i] !== 0) {
+          speed.min = Math.min(speed.min, speed.array[i]);
+          speed.max = Math.max(speed.max, speed.array[i]);
+        }
+      }
+      return {
+        ...windData,
+        speed
+      }
+    }
+    return windData as Required<WindData>;
+  }
+
+  /**
+   * Get the wind data at a specific longitude and latitude.
+   * @param {number} lon - The longitude.
+   * @param {number} lat - The latitude.
+   * @returns {Object} - An object containing the u, v, and speed values at the specified coordinates.
+   */
+  getDataAtLonLat(lon: number, lat: number): { u: number, v: number, speed: number } | null {
+    const { bounds, width, height, u, v, speed } = this.windData;
+    const { flipY } = this.options;
+
+    // Check if the coordinates are within bounds
+    if (lon < bounds.west || lon > bounds.east || lat < bounds.south || lat > bounds.north) {
+      return null;
+    }
+
+    const x = Math.floor((lon - bounds.west) / (bounds.east - bounds.west) * (width - 1));
+    let y = Math.floor((lat - bounds.south) / (bounds.north - bounds.south) * (height - 1));
+
+    // Apply flipY if enabled
+    if (flipY) {
+      y = height - 1 - y;
+    }
+
+    // Ensure x and y are within the array bounds
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+      return null;
+    }
+
+    const index = y * width + x;
+
+    return {
+      u: u.array[index],
+      v: v.array[index],
+      speed: speed.array[index]
+    };
   }
 
   private updateViewerParameters(): void {
@@ -152,7 +212,8 @@ export class WindLayer {
    * @param {WindData} data - The new wind data to apply.
    */
   updateWindData(data: WindData): void {
-    this.particleSystem.updateWindData(data);
+    this.windData = this.processWindData(data);
+    this.particleSystem.computing.updateWindData(this.windData);
     this.viewer.scene.requestRender();
   }
 
