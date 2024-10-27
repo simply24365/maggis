@@ -2,9 +2,6 @@ import {
   Viewer,
   Scene,
   Cartesian2,
-  Cartesian3,
-  BoundingSphere,
-  Ellipsoid,
   SceneMode,
   Math as CesiumMath,
   Rectangle
@@ -166,20 +163,45 @@ export class WindLayer {
   }
 
   private updateViewerParameters(): void {
-    const viewRectangle = this.viewer.camera.computeViewRectangle();
-    if (viewRectangle) {
-      let minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
-      let maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
-      let minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
-      let maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
-      // Add 5% buffer to lonRange and latRange
-      const lonBuffer = (maxLon - minLon) * 0.05;
-      const latBuffer = (maxLat - minLat) * 0.05;
-      minLon = Math.max(this.windData.bounds.west, minLon - lonBuffer);
-      maxLon = Math.min(this.windData.bounds.east, maxLon + lonBuffer);
-      minLat = Math.max(this.windData.bounds.south, minLat - latBuffer);
-      maxLat = Math.min(this.windData.bounds.north, maxLat + latBuffer);
-      // 计算经纬度范围的交集
+    const scene = this.viewer.scene;
+    const canvas = scene.canvas;
+    const corners = [
+      { x: 0, y: 0 },
+      { x: 0, y: canvas.clientHeight },
+      { x: canvas.clientWidth, y: 0 },
+      { x: canvas.clientWidth, y: canvas.clientHeight }
+    ];
+
+    // Convert screen corners to cartographic coordinates
+    let minLon = 180;
+    let maxLon = -180;
+    let minLat = 90;
+    let maxLat = -90;
+    let isOutsideGlobe = false;
+
+    for (const corner of corners) {
+      const cartesian = scene.camera.pickEllipsoid(
+        new Cartesian2(corner.x, corner.y),
+        scene.globe.ellipsoid
+      );
+
+      if (!cartesian) {
+        isOutsideGlobe = true;
+        break;
+      }
+
+      const cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian);
+      const lon = CesiumMath.toDegrees(cartographic.longitude);
+      const lat = CesiumMath.toDegrees(cartographic.latitude);
+
+      minLon = Math.min(minLon, lon);
+      maxLon = Math.max(maxLon, lon);
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+    }
+
+    if (!isOutsideGlobe) {
+      // Calculate intersection with data bounds
       const lonRange = new Cartesian2(
         Math.max(this.windData.bounds.west, minLon),
         Math.min(this.windData.bounds.east, maxLon)
@@ -189,19 +211,33 @@ export class WindLayer {
         Math.min(this.windData.bounds.north, maxLat)
       );
 
+      // Add 5% buffer to lonRange and latRange
+      const lonBuffer = (lonRange.y - lonRange.x) * 0.05;
+      const latBuffer = (latRange.y - latRange.x) * 0.05;
+
+      lonRange.x = Math.max(this.windData.bounds.west, lonRange.x - lonBuffer);
+      lonRange.y = Math.min(this.windData.bounds.east, lonRange.y + lonBuffer);
+      latRange.x = Math.max(this.windData.bounds.south, latRange.x - latBuffer);
+      latRange.y = Math.min(this.windData.bounds.north, latRange.y + latBuffer);
+
       this.viewerParameters.lonRange = lonRange;
       this.viewerParameters.latRange = latRange;
+
+      // Calculate pixelSize based on the visible range
+      const dataLonRange = this.windData.bounds.east - this.windData.bounds.west;
+      const dataLatRange = this.windData.bounds.north - this.windData.bounds.south;
+
+      // Calculate the ratio of visible area to total data area based on the shortest side
+      const visibleRatioLon = (lonRange.y - lonRange.x) / dataLonRange;
+      const visibleRatioLat = (latRange.y - latRange.x) / dataLatRange;
+      const visibleRatio = Math.min(visibleRatioLon, visibleRatioLat);
+
+      // Map the ratio to a pixelSize value between 0 and 1000
+      const pixelSize = 1000 * visibleRatio;
+
+      this.viewerParameters.pixelSize = 5 + Math.max(0, Math.min(1000, pixelSize));
     }
 
-    const pixelSize = this.viewer.camera.getPixelSize(
-      new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
-      this.viewer.scene.drawingBufferWidth,
-      this.viewer.scene.drawingBufferHeight
-    );
-
-    if (pixelSize > 0) {
-      this.viewerParameters.pixelSize = pixelSize;
-    }
 
     this.viewerParameters.sceneMode = this.scene.mode;
     this.particleSystem?.applyViewerParameters(this.viewerParameters);

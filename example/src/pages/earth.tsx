@@ -29,8 +29,9 @@ const defaultOptions: Partial<WindLayerOptions> = {
   dropRateBump: 0.01,
   speedFactor: 1.0,
   lineWidth: 10.0,
-  colors: colorSchemes[7].colors,
+  colors: colorSchemes[2].colors,
   flipY: true,
+  useViewerBounds: true,
 };
 
 export function Earth() {

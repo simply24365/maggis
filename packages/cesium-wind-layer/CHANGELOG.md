@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.4.3
+
+### Patch Changes
+
+- Tilting the camera angle still displays particles
+
 ## 0.4.2
 
 ### Patch Changes

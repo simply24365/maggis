@@ -325,7 +325,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Factor to adjust the speed of particles. Controls the movement speed of particles.'
                 )}
               >
-                <Slider min={0.1} max={2} step={0.1} />
+                <Slider min={0.1} max={10} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem

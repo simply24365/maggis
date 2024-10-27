@@ -61,7 +61,7 @@ export const colorSchemes = [
   { label: 'Purples', value: 'purples', interpolator: interpolatePurples },
 ].map((item) => ({
   ...item,
-  colors: generateColorTable(item.interpolator, item.reverse),
+  colors: generateColorTable(item.interpolator, true),
 }));
 
 const ColorTableInput: React.FC<ColorTableInputProps> = ({
@@ -91,7 +91,7 @@ const ColorTableInput: React.FC<ColorTableInputProps> = ({
         {Array.from({ length: segments }).map((_, i) => (
           <ColorSegment
             key={i}
-            color={scheme.interpolator(i / (segments - 1))}
+            color={scheme.colors[i]}
           />
         ))}
       </ColorPreview>
