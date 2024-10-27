@@ -131,7 +131,7 @@ export class WindParticlesComputing {
           U: () => this.windTextures.U,
           V: () => this.windTextures.V,
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
-          speedScaleFactor: () => this.viewerParameters.pixelSize * this.options.speedFactor,
+          speedScaleFactor: () => (this.viewerParameters.pixelSize + 50) * this.options.speedFactor,
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,

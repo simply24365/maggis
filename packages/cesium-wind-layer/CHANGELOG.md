@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.4.1
+
+### Patch Changes
+
+- fix: quickly adapt to camera changes
+
 ## 0.4.0
 
 ### Minor Changes

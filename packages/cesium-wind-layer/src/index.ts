@@ -93,6 +93,7 @@ export class WindLayer {
   }
 
   private setupEventListeners(): void {
+    this.viewer.camera.percentageChanged = 0.01;
     this.viewer.camera.changed.addEventListener(this.updateViewerParameters.bind(this));
     this.scene.morphComplete.addEventListener(this.updateViewerParameters.bind(this));
     window.addEventListener("resize", this.updateViewerParameters.bind(this));
@@ -107,10 +108,17 @@ export class WindLayer {
   private updateViewerParameters(): void {
     const viewRectangle = this.viewer.camera.computeViewRectangle();
     if (viewRectangle) {
-      const minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
-      const maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
-      const minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
-      const maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
+      let minLon = CesiumMath.toDegrees(Math.max(viewRectangle.west, -Math.PI));
+      let maxLon = CesiumMath.toDegrees(Math.min(viewRectangle.east, Math.PI));
+      let minLat = CesiumMath.toDegrees(Math.max(viewRectangle.south, -Math.PI / 2));
+      let maxLat = CesiumMath.toDegrees(Math.min(viewRectangle.north, Math.PI / 2));
+      // Add 5% buffer to lonRange and latRange
+      const lonBuffer = (maxLon - minLon) * 0.05;
+      const latBuffer = (maxLat - minLat) * 0.05;
+      minLon = Math.max(this.windData.bounds.west, minLon - lonBuffer);
+      maxLon = Math.min(this.windData.bounds.east, maxLon + lonBuffer);
+      minLat = Math.max(this.windData.bounds.south, minLat - latBuffer);
+      maxLat = Math.min(this.windData.bounds.north, maxLat + latBuffer);
       // 计算经纬度范围的交集
       const lonRange = new Cartesian2(
         Math.max(this.windData.bounds.west, minLon),
@@ -120,16 +128,16 @@ export class WindLayer {
         Math.max(this.windData.bounds.south, minLat),
         Math.min(this.windData.bounds.north, maxLat)
       );
+
       this.viewerParameters.lonRange = lonRange;
       this.viewerParameters.latRange = latRange;
     }
 
-    const rawPixelSize = this.viewer.camera.getPixelSize(
+    const pixelSize = this.viewer.camera.getPixelSize(
       new BoundingSphere(Cartesian3.ZERO, Ellipsoid.WGS84.maximumRadius),
       this.viewer.scene.drawingBufferWidth,
       this.viewer.scene.drawingBufferHeight
     );
-    const pixelSize = rawPixelSize + 100;
 
     if (pixelSize > 0) {
       this.viewerParameters.pixelSize = pixelSize;

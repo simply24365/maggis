@@ -33,26 +33,6 @@ float getWindComponent(sampler2D componentTexture, vec2 lonLat) {
     return result;
 }
 
-float interpolateTexture(sampler2D componentTexture, vec2 lonLat) {
-    float lon = lonLat.x;
-    float lat = lonLat.y;
-
-    float lon0 = floor(lon / interval.x) * interval.x;
-    float lon1 = lon0 + 1.0 * interval.x;
-    float lat0 = floor(lat / interval.y) * interval.y;
-    float lat1 = lat0 + 1.0 * interval.y;
-
-    float lon0_lat0 = getWindComponent(componentTexture, vec2(lon0, lat0));
-    float lon1_lat0 = getWindComponent(componentTexture, vec2(lon1, lat0));
-    float lon0_lat1 = getWindComponent(componentTexture, vec2(lon0, lat1));
-    float lon1_lat1 = getWindComponent(componentTexture, vec2(lon1, lat1));
-
-    float lon_lat0 = mix(lon0_lat0, lon1_lat0, lon - lon0);
-    float lon_lat1 = mix(lon0_lat1, lon1_lat1, lon - lon0);
-    float lon_lat = mix(lon_lat0, lon_lat1, lat - lat0);
-    return lon_lat;
-}
-
 vec2 getWindComponents(vec2 lonLat) {
     vec2 normalizedIndex2D = mapPositionToNormalizedIndex2D(lonLat);
     float u = texture(U, normalizedIndex2D).r;

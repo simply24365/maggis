@@ -247,6 +247,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   windLayer,
   initialOptions,
 }) => {
+  const [form] = Form.useForm();
   const [options, setOptions] = useState<WindLayerOptions>({
     ...WindLayer.defaultOptions,
     ...initialOptions,
@@ -256,10 +257,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    setOptions({
+    const allValues = {
       ...WindLayer.defaultOptions,
       ...initialOptions,
-    });
+    };
+    setOptions(allValues);
+    form.setFieldsValue(allValues);
   }, [windLayer, initialOptions]);
 
   const renderLabel = (label: string, tooltip: string) => (
@@ -326,6 +329,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       >
         <CardContent $collapsed={collapsed}>
           <Form
+            form={form}
             initialValues={initialOptions}
             onValuesChange={handleValuesChange}
             layout="vertical"
