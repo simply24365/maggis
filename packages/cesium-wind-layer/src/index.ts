@@ -30,11 +30,11 @@ export class WindLayer {
 
   static defaultOptions: WindLayerOptions = {
     particlesTextureSize: 100,
-    particleHeight: 0,
-    lineWidth: 10.0,
-    speedFactor: 10,
     dropRate: 0.003,
-    dropRateBump: 0.001,
+    particleHeight: 1000,
+    dropRateBump: 0.01,
+    speedFactor: 1.0,
+    lineWidth: 10.0,
     colors: ['white'],
     flipY: false,
     useViewerBounds: false // 默认使用全局范围

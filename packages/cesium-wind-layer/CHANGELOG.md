@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.5.2
+
+### Patch Changes
+
+- fix: fix default render options
+
 ## 0.5.1
 
 ### Patch Changes
