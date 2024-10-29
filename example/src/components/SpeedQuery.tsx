@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Typography, Space, Button } from 'antd';
 import styled from 'styled-components';
 import { WindDataAtLonLat, WindLayer } from 'cesium-wind-layer';
@@ -140,6 +140,7 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
   const [queryResult, setQueryResult] = useState<WindData | null>(null);
   const [location, setLocation] = useState<{ lon: number; lat: number } | null>(null);
   const [showInterpolated, setShowInterpolated] = useState(true);
+  const lastLocationRef = useRef<{ lon: number; lat: number } | null>(null);
 
   const calculateWindDirection = (u: number, v: number): number => {
     // 使用 atan2 计算角度，注意参数顺序：atan2(y, x)
@@ -162,20 +163,12 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
   };
 
   useEffect(() => {
-    if (!viewer || !windLayer) return;
+    if (!windLayer) return;
 
-    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
-    const handleClick = (movement: any) => {
-      const cartesian = viewer.camera.pickEllipsoid(movement.position);
-      if (cartesian) {
-        const cartographic = Cartographic.fromCartesian(cartesian);
-        const lon = CesiumMath.toDegrees(cartographic.longitude);
-        const lat = CesiumMath.toDegrees(cartographic.latitude);
-        
+    const handleDataChange = () => {
+      if (lastLocationRef.current) {
         try {
-          const result = windLayer.getDataAtLonLat(lon, lat);
-          setLocation({ lon, lat });
-          
+          const result = windLayer.getDataAtLonLat(lastLocationRef.current.lon, lastLocationRef.current.lat);
           if (result) {
             const data = showInterpolated ? result.interpolated : result.original;
             const direction = calculateWindDirection(data.u, data.v);
@@ -190,13 +183,56 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
       }
     };
 
+    // Add event listener for data changes
+    windLayer.addEventListener('dataChange', handleDataChange);
+
+    return () => {
+      // Remove event listener when component unmounts or windLayer changes
+      windLayer.removeEventListener('dataChange', handleDataChange);
+    };
+  }, [windLayer, showInterpolated]);
+
+  useEffect(() => {
+    if (!location || !windLayer) return;
+    
+    lastLocationRef.current = location;
+    
+    try {
+      const result = windLayer.getDataAtLonLat(location.lon, location.lat);
+      if (result) {
+        const data = showInterpolated ? result.interpolated : result.original;
+        const direction = calculateWindDirection(data.u, data.v);
+        setQueryResult({ ...result, direction });
+      } else {
+        setQueryResult(null);
+      }
+    } catch (error) {
+      console.error('Failed to get wind data:', error);
+      setQueryResult(null);
+    }
+  }, [windLayer, location, showInterpolated]);
+
+  useEffect(() => {
+    if (!viewer || !windLayer) return;
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
+    const handleClick = (movement: any) => {
+      const cartesian = viewer.camera.pickEllipsoid(movement.position);
+      if (cartesian) {
+        const cartographic = Cartographic.fromCartesian(cartesian);
+        const lon = CesiumMath.toDegrees(cartographic.longitude);
+        const lat = CesiumMath.toDegrees(cartographic.latitude);
+        setLocation({ lon, lat });
+      }
+    };
+
     handler.setInputAction(handleClick, ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction(handleClick, ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
     return () => {
       handler.destroy();
     };
-  }, [viewer, windLayer, showInterpolated]);
+  }, [viewer, windLayer]);
 
   const currentData = queryResult ? (showInterpolated ? queryResult.interpolated : queryResult.original) : null;
 

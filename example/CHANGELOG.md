@@ -1,5 +1,22 @@
 # example
 
+## 0.4.0
+
+### Minor Changes
+
+- feat: add event system for wind layer
+
+  - Add event system for data and options changes
+  - Add WindLayerEventType and WindLayerEventCallback types
+  - Implement addEventListener and removeEventListener methods
+  - Add event dispatching for data and options updates
+  - Improve texture recreation when updating wind data
+
+### Patch Changes
+
+- Updated dependencies
+  - cesium-wind-layer@0.6.0
+
 ## 0.3.7
 
 ### Patch Changes

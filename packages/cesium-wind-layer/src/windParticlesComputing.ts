@@ -208,19 +208,22 @@ export class WindParticlesComputing {
     };
   }
 
+  private reCreateWindTextures() {
+    this.windTextures.U.destroy();
+    this.windTextures.V.destroy();
+    this.createWindTextures();
+  }
+
   updateWindData(data: Required<WindData>) {
     this.windData = data;
-    this.windTextures.U.copyFrom({ source: data.u.array });
-    this.windTextures.V.copyFrom({ source: data.v.array });
+    this.reCreateWindTextures();
   }
 
   updateOptions(options: Partial<WindLayerOptions>) {
     const needUpdateWindTextures = options.flipY !== this.options.flipY;
     this.options = { ...this.options, ...options };
     if (needUpdateWindTextures) {
-      this.windTextures.U.destroy();
-      this.windTextures.V.destroy();
-      this.createWindTextures();
+      this.reCreateWindTextures();
     }
   }
 

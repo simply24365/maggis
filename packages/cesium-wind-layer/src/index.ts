@@ -12,6 +12,9 @@ import { WindParticleSystem } from './windParticleSystem';
 
 export * from './types';
 
+type WindLayerEventType = 'dataChange' | 'optionsChange';
+type WindLayerEventCallback = (data: WindData | WindLayerOptions) => void;
+
 export class WindLayer {
   private _show: boolean = true;
   private _resized: boolean = false;
@@ -52,6 +55,7 @@ export class WindLayer {
   };
   private _isDestroyed: boolean = false;
   private primitives: any[] = [];
+  private eventListeners: Map<WindLayerEventType, Set<WindLayerEventCallback>> = new Map();
 
   /**
    * WindLayer class for visualizing wind field data with particle animation in Cesium.
@@ -294,6 +298,8 @@ export class WindLayer {
     this.windData = this.processWindData(data);
     this.particleSystem.computing.updateWindData(this.windData);
     this.viewer.scene.requestRender();
+    // Dispatch data change event
+    this.dispatchEvent('dataChange', this.windData);
   }
 
   /**
@@ -304,6 +310,8 @@ export class WindLayer {
     this.options = { ...this.options, ...options };
     this.particleSystem.changeOptions(options);
     this.viewer.scene.requestRender();
+    // Dispatch options change event
+    this.dispatchEvent('optionsChange', this.options);
   }
 
   zoomTo(duration: number = 0): void {
@@ -343,6 +351,8 @@ export class WindLayer {
     this.remove();
     this.removeEventListeners();
     this.particleSystem.destroy();
+    // Clear all event listeners
+    this.eventListeners.clear();
     this._isDestroyed = true;
   }
 
@@ -353,6 +363,21 @@ export class WindLayer {
     });
   }
 
+  addEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
+    if (!this.eventListeners.has(type)) {
+      this.eventListeners.set(type, new Set());
+    }
+    this.eventListeners.get(type)?.add(callback);
+  }
+
+  removeEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
+    this.eventListeners.get(type)?.delete(callback);
+  }
+
+  private dispatchEvent(type: WindLayerEventType, data: WindData | WindLayerOptions) {
+    this.eventListeners.get(type)?.forEach(callback => callback(data));
+  }
+
 }
 
-export type { WindLayerOptions, WindData };
+export type { WindLayerOptions, WindData, WindLayerEventType, WindLayerEventCallback };
