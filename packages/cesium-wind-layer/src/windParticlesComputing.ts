@@ -25,6 +25,11 @@ export class WindParticlesComputing {
   };
   private bounds: WindData['bounds'];
   windData: Required<WindData>;
+  private frameRate: number = 60;
+  private lastFrameTime: number = 0;
+  private frameRateUpdateInterval: number = 500; // Update frame rate every 500ms
+  private frameCount: number = 0;
+  private frameRateStartTime: number = 0;
 
   constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
     this.context = context;
@@ -33,9 +38,22 @@ export class WindParticlesComputing {
     this.bounds = windData.bounds;
     this.windData = windData;
 
+    this.frameRateStartTime = performance.now();
     this.createWindTextures();
     this.createParticlesTextures();
     this.createComputingPrimitives();
+  }
+
+  private updateFrameRate() {
+    const currentTime = performance.now();
+    this.frameCount++;
+
+    // Update frame rate every 500ms
+    if (currentTime - this.frameRateStartTime >= this.frameRateUpdateInterval) {
+      this.frameRate = Math.round((this.frameCount * 1000) / (currentTime - this.frameRateStartTime));
+      this.frameCount = 0;
+      this.frameRateStartTime = currentTime;
+    }
   }
 
   createWindTextures() {
@@ -107,7 +125,6 @@ export class WindParticlesComputing {
       (maximum.y - minimum.y) / (dimension.y - 1)
     );
 
-
     this.primitives = {
       calculateSpeed: new CustomPrimitive({
         commandType: 'Compute',
@@ -118,7 +135,11 @@ export class WindParticlesComputing {
           vRange: () => new Cartesian2(this.windData.v.min, this.windData.v.max),
           speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
-          speedScaleFactor: () => (this.viewerParameters.pixelSize + 50) * this.options.speedFactor,
+          speedScaleFactor: () => {
+            this.updateFrameRate();
+            const frameRateAdjustment = 60 / this.frameRate;
+            return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor * frameRateAdjustment;
+          },
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,

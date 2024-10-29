@@ -1,5 +1,15 @@
 # cesium-wind-layer
 
+## 0.5.1
+
+### Patch Changes
+
+- fix: adjust particle speed based on actual frame rate
+
+  - Add real-time frame rate measurement to normalize particle speed
+  - Update frame rate calculation every 500ms for better performance
+  - Apply frame rate adjustment (60/fps) to maintain consistent particle movement speed across different devices
+
 ## 0.5.0
 
 ### Minor Changes
