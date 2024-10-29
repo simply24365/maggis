@@ -1,5 +1,16 @@
 # cesium-wind-layer
 
+## 0.5.3
+
+### Patch Changes
+
+- fix: calculate frame rate only during initialization
+
+  - Move frame rate calculation to initialization phase
+  - Use timestamp array to measure frames in the last second
+  - Calculate FPS once with 120 frames sample for better accuracy
+  - Store frame rate adjustment factor for consistent particle speed
+
 ## 0.5.2
 
 ### Patch Changes

@@ -26,10 +26,7 @@ export class WindParticlesComputing {
   private bounds: WindData['bounds'];
   windData: Required<WindData>;
   private frameRate: number = 60;
-  private lastFrameTime: number = 0;
-  private frameRateUpdateInterval: number = 500; // Update frame rate every 500ms
-  private frameCount: number = 0;
-  private frameRateStartTime: number = 0;
+  private frameRateAdjustment: number = 1;
 
   constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
     this.context = context;
@@ -38,22 +35,35 @@ export class WindParticlesComputing {
     this.bounds = windData.bounds;
     this.windData = windData;
 
-    this.frameRateStartTime = performance.now();
+    this.initFrameRate();
     this.createWindTextures();
     this.createParticlesTextures();
     this.createComputingPrimitives();
   }
 
-  private updateFrameRate() {
-    const currentTime = performance.now();
-    this.frameCount++;
+  private initFrameRate() {
+    let times: number[] = [];
+    let frameCount = 0;
 
-    // Update frame rate every 500ms
-    if (currentTime - this.frameRateStartTime >= this.frameRateUpdateInterval) {
-      this.frameRate = Math.round((this.frameCount * 1000) / (currentTime - this.frameRateStartTime));
-      this.frameCount = 0;
-      this.frameRateStartTime = currentTime;
-    }
+    const measureFrameRate = (timestamp: number) => {
+      times.push(timestamp);
+      frameCount++;
+
+      // Keep only the times in the last second
+      const now = timestamp;
+      times = times.filter(t => now - t < 1000);
+
+      if (frameCount >= 120) { // Measure over more frames for better accuracy
+        // Calculate FPS based on the number of frames in the last second
+        this.frameRate = Math.round(times.length);
+        this.frameRateAdjustment = 60 / this.frameRate;
+        return;
+      }
+
+      requestAnimationFrame(measureFrameRate);
+    };
+
+    requestAnimationFrame(measureFrameRate);
   }
 
   createWindTextures() {
@@ -136,9 +146,7 @@ export class WindParticlesComputing {
           speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
           speedScaleFactor: () => {
-            this.updateFrameRate();
-            const frameRateAdjustment = 60 / this.frameRate;
-            return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor * frameRateAdjustment;
+            return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor * this.frameRateAdjustment;
           },
           dimension: () => dimension,
           minimum: () => minimum,
