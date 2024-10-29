@@ -29,7 +29,7 @@ const defaultOptions: Partial<WindLayerOptions> = {
   dropRateBump: 0.01,
   speedFactor: 1.0,
   lineWidth: 10.0,
-  colors: colorSchemes[2].colors,
+  colors: colorSchemes[3].colors,
   flipY: true,
   useViewerBounds: true,
 };

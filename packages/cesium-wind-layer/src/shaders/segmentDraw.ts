@@ -117,7 +117,11 @@ void main() {
     // 计算速度相关的宽度和长度因子
     float speedFactor = max(0.3, speedNormalization);
     float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
-    float lengthFactor = 10.0; // 控制整体长度
+    
+    // Modify length calculation with constraints
+    float baseLengthFactor = 10.0;
+    float speedBasedLength = baseLengthFactor * speedFactor;
+    float lengthFactor = clamp(speedBasedLength, 10.0, 100.0);
 
     if (pointToUse == 1) {
         // 头部位置
@@ -130,7 +134,7 @@ void main() {
         gl_Position = projectedCoordinates.previous + offset;
         v_segmentPosition = 0.0; // 头部
     } else if (pointToUse == -1) {
-        // 尾部位置，向后延伸
+        // 尾部位置，向后延伸，使用受限制的长度
         vec4 direction = projectedCoordinates.next - projectedCoordinates.current;
         vec4 extendedPosition = projectedCoordinates.current + direction * lengthFactor;
 
@@ -174,7 +178,7 @@ void main() {
         float speedAlpha = mix(0.3, 1.0, speedNormalization);
 
         // 组合颜色和透明度
-        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha * 0.9); // 稍微降低整体透明度
+        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha);
     } else {
         fragColor = vec4(zero);
     }

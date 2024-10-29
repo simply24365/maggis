@@ -67,7 +67,7 @@ const windData = {
 
 // 使用配置创建风场图层
 const windLayer = new WindLayer(viewer, windData, {
-  particlesTextureSize: 256,  // 粒子系统的纹理大小
+  particlesTextureSize: 100,  // 粒子系统的纹理大小
   particleHeight: 1000,       // 粒子距地面高度
   lineWidth: 10.0,            // 粒子轨迹宽度
   speedFactor: 1.0,         // 速度倍数
@@ -88,8 +88,8 @@ const windLayer = new WindLayer(viewer, windData, {
 
 ```typescript
 interface WindLayerOptions {
-  particlesTextureSize: number;  // 粒子纹理大小（默认：256）
-  particleHeight: number;        // 粒子高度（默认：1000）
+  particlesTextureSize: number;  // 粒子纹理大小，决定粒子最大数量（size * size）（默认：100）
+  particleHeight: number;        // 粒子距地面高度（默认：0）
   lineWidth: number;            // 粒子线宽（默认：3.0）
   speedFactor: number;          // 速度倍数（默认：1.0）
   dropRate: number;             // 粒子消失率（默认：0.003）
@@ -109,7 +109,7 @@ interface WindLayerOptions {
 | `show: boolean` | 获取或设置风场图层的可见性 |
 | `updateWindData(data: WindData)` | 更新风场数据 |
 | `updateOptions(options: Partial<WindLayerOptions>)` | 更新风场图层的选项 |
-| `getDataAtLonLat(lon: number, lat: number): { u: number, v: number, speed: number }` | 获取指定经纬度的风场数据 |
+| `getDataAtLonLat(lon: number, lat: number): WindDataAtLonLat \| null` | 获取指定经纬度的风场数据，返回原始值和插值结果。如果坐标超出范围则返回 null |
 | `zoomTo(duration?: number)` | 缩放相机以适应风场范围 |
 | `isDestroyed(): boolean` | 检查风场图层是否已被销毁 |
 | `destroy()` | 清理资源并销毁风场图层 |

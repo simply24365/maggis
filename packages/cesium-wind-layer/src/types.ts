@@ -68,3 +68,40 @@ export interface Particle {
   position: Cartesian3;
   age: number;
 }
+
+export interface WindDataAtLonLat {
+  /**
+   * Original data at the grid point
+   */
+  original: {
+    /**
+     * Original U component
+     */
+    u: number;
+    /**
+     * Original V component
+     */
+    v: number;
+    /**
+     * Original speed
+     */
+    speed: number;
+  };
+  /**
+   * Interpolated data between grid points
+   */
+  interpolated: {
+    /**
+     * Interpolated U component
+     */
+    u: number;
+    /**
+     * Interpolated V component
+     */
+    v: number;
+    /**
+     * Interpolated speed
+     */
+    speed: number;
+  };
+}

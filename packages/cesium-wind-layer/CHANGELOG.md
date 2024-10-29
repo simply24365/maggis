@@ -1,5 +1,26 @@
 # cesium-wind-layer
 
+## 0.5.0
+
+### Minor Changes
+
+- feat: enhance wind layer visualization and data query
+
+  - Improve particle system performance and coverage
+
+    - Fix particle distribution in certain areas
+    - Optimize particle generation algorithm
+    - Adjust particle visibility calculation
+    - Add 5% buffer to view range for smoother transitions
+
+  - Enhance wind data query functionality
+    - Refactor WindDataAtLonLat interface with clear structure
+    - Add bilinear interpolation for wind data
+    - Separate original and interpolated data in query results
+    - Add detailed JSDoc comments for better type documentation
+
+  BREAKING CHANGE: WindDataAtLonLat interface structure has changed. Now returns data in 'original' and 'interpolated' sub-objects.
+
 ## 0.4.3
 
 ### Patch Changes

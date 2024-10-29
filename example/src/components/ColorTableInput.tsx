@@ -47,6 +47,7 @@ const generateColorTable = (
 };
 
 export const colorSchemes = [
+  { label: 'White', value: 'white', interpolator: () => 'white' },
   { label: 'Rainbow', value: 'rainbow', interpolator: interpolateRainbow, reverse: true },
   { label: 'Viridis', value: 'viridis', interpolator: interpolateViridis },
   { label: 'Cool', value: 'cool', interpolator: interpolateCool },

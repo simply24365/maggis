@@ -109,7 +109,7 @@ interface WindLayerOptions {
 | `show: boolean` | Get or set the visibility of the wind layer |
 | `updateWindData(data: WindData)` | Update the wind field data |
 | `updateOptions(options: Partial<WindLayerOptions>)` | Update the options of the wind layer |
-| `getDataAtLonLat(lon: number, lat: number): { u: number, v: number, speed: number }` | Get the wind data at a specific longitude and latitude |
+| `getDataAtLonLat(lon: number, lat: number): WindDataAtLonLat \| null` | Get the wind data at a specific longitude and latitude, returns both original and interpolated values. Returns null if coordinates are outside bounds |
 | `zoomTo(duration?: number)` | Zoom the camera to fit the wind field extent |
 | `isDestroyed(): boolean` | Check if the wind layer has been destroyed |
 | `destroy()` | Clean up resources and destroy the wind layer |

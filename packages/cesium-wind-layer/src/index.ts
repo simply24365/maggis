@@ -7,8 +7,10 @@ import {
   Rectangle
 } from 'cesium';
 
-import { WindLayerOptions, WindData } from './types';
+import { WindLayerOptions, WindData, WindDataAtLonLat } from './types';
 import { WindParticleSystem } from './windParticleSystem';
+
+export * from './types';
 
 export class WindLayer {
   private _show: boolean = true;
@@ -78,7 +80,7 @@ export class WindLayer {
     this.viewerParameters = {
       lonRange: new Cartesian2(-180, 180),
       latRange: new Cartesian2(-90, 90),
-      pixelSize: 2000.0,
+      pixelSize: 1000.0,
       sceneMode: this.scene.mode
     };
     this.updateViewerParameters();
@@ -131,7 +133,7 @@ export class WindLayer {
    * @param {number} lat - The latitude.
    * @returns {Object} - An object containing the u, v, and speed values at the specified coordinates.
    */
-  getDataAtLonLat(lon: number, lat: number): { u: number, v: number, speed: number } | null {
+  getDataAtLonLat(lon: number, lat: number): WindDataAtLonLat | null {
     const { bounds, width, height, u, v, speed } = this.windData;
     const { flipY } = this.options;
 
@@ -140,25 +142,66 @@ export class WindLayer {
       return null;
     }
 
-    const x = Math.floor((lon - bounds.west) / (bounds.east - bounds.west) * (width - 1));
-    let y = Math.floor((lat - bounds.south) / (bounds.north - bounds.south) * (height - 1));
+    // Calculate normalized coordinates
+    const xNorm = (lon - bounds.west) / (bounds.east - bounds.west) * (width - 1);
+    let yNorm = (lat - bounds.south) / (bounds.north - bounds.south) * (height - 1);
 
     // Apply flipY if enabled
     if (flipY) {
-      y = height - 1 - y;
+      yNorm = height - 1 - yNorm;
     }
 
-    // Ensure x and y are within the array bounds
-    if (x < 0 || x >= width || y < 0 || y >= height) {
-      return null;
-    }
+    // Get exact grid point for original values
+    const x = Math.floor(xNorm);
+    const y = Math.floor(yNorm);
 
+    // Get the four surrounding grid points for interpolation
+    const x0 = Math.floor(xNorm);
+    const x1 = Math.min(x0 + 1, width - 1);
+    const y0 = Math.floor(yNorm);
+    const y1 = Math.min(y0 + 1, height - 1);
+
+    // Calculate interpolation weights
+    const wx = xNorm - x0;
+    const wy = yNorm - y0;
+
+    // Get indices
     const index = y * width + x;
+    const i00 = y0 * width + x0;
+    const i10 = y0 * width + x1;
+    const i01 = y1 * width + x0;
+    const i11 = y1 * width + x1;
+
+    // Bilinear interpolation for u component
+    const u00 = u.array[i00];
+    const u10 = u.array[i10];
+    const u01 = u.array[i01];
+    const u11 = u.array[i11];
+    const uInterp = (1 - wx) * (1 - wy) * u00 + wx * (1 - wy) * u10 +
+      (1 - wx) * wy * u01 + wx * wy * u11;
+
+    // Bilinear interpolation for v component
+    const v00 = v.array[i00];
+    const v10 = v.array[i10];
+    const v01 = v.array[i01];
+    const v11 = v.array[i11];
+    const vInterp = (1 - wx) * (1 - wy) * v00 + wx * (1 - wy) * v10 +
+      (1 - wx) * wy * v01 + wx * wy * v11;
+
+    // Calculate interpolated speed
+    const interpolatedSpeed = Math.sqrt(uInterp * uInterp + vInterp * vInterp);
 
     return {
-      u: u.array[index],
-      v: v.array[index],
-      speed: speed.array[index]
+      original: {
+        u: u.array[index],
+        v: v.array[index],
+        speed: speed.array[index],
+      },
+      interpolated: {
+        u: uInterp,
+        v: vInterp,
+        speed: interpolatedSpeed,
+      }
     };
   }
 
@@ -200,7 +243,7 @@ export class WindLayer {
       maxLat = Math.max(maxLat, lat);
     }
 
-    if (!isOutsideGlobe) {
+    if (!isOutsideGlobe) { // -30 degrees in radians
       // Calculate intersection with data bounds
       const lonRange = new Cartesian2(
         Math.max(this.windData.bounds.west, minLon),
@@ -222,7 +265,6 @@ export class WindLayer {
 
       this.viewerParameters.lonRange = lonRange;
       this.viewerParameters.latRange = latRange;
-
       // Calculate pixelSize based on the visible range
       const dataLonRange = this.windData.bounds.east - this.windData.bounds.west;
       const dataLatRange = this.windData.bounds.north - this.windData.bounds.south;
@@ -234,8 +276,9 @@ export class WindLayer {
 
       // Map the ratio to a pixelSize value between 0 and 1000
       const pixelSize = 1000 * visibleRatio;
-
-      this.viewerParameters.pixelSize = 5 + Math.max(0, Math.min(1000, pixelSize));
+      if (pixelSize > 0) {
+        this.viewerParameters.pixelSize = Math.max(0, Math.min(1000, pixelSize));
+      }
     }
 
 

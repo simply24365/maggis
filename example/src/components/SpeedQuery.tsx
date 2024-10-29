@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Space, Divider } from 'antd';
+import { Typography, Space, Button } from 'antd';
 import styled from 'styled-components';
-import { WindLayer } from 'cesium-wind-layer';
+import { WindDataAtLonLat, WindLayer } from 'cesium-wind-layer';
 import { Viewer, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartographic, Math as CesiumMath } from 'cesium';
 import { GithubOutlined } from '@ant-design/icons';
 
@@ -107,10 +107,27 @@ const DirectionArrow = styled.span<{ $angle: number }>`
   font-family: "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
 `;
 
-interface WindData {
-  speed: number;
-  u: number;
-  v: number;
+const DataContainer = styled(Space)`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+`;
+
+const DataGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const ToggleButton = styled(Button)`
+  font-size: 12px;
+  padding: 2px 8px;
+  height: 24px;
+`;
+
+interface WindData extends WindDataAtLonLat {
   direction?: number;
 }
 
@@ -122,6 +139,7 @@ interface SpeedQueryProps {
 export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => {
   const [queryResult, setQueryResult] = useState<WindData | null>(null);
   const [location, setLocation] = useState<{ lon: number; lat: number } | null>(null);
+  const [showInterpolated, setShowInterpolated] = useState(true);
 
   const calculateWindDirection = (u: number, v: number): number => {
     // 使用 atan2 计算角度，注意参数顺序：atan2(y, x)
@@ -158,8 +176,9 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
           const result = windLayer.getDataAtLonLat(lon, lat);
           setLocation({ lon, lat });
           
-          if (result && typeof result.u === 'number' && typeof result.v === 'number') {
-            const direction = calculateWindDirection(result.u, result.v);
+          if (result) {
+            const data = showInterpolated ? result.interpolated : result.original;
+            const direction = calculateWindDirection(data.u, data.v);
             setQueryResult({ ...result, direction });
           } else {
             setQueryResult(null);
@@ -171,14 +190,15 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
       }
     };
 
-    // 支持移动端触摸
     handler.setInputAction(handleClick, ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction(handleClick, ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
     return () => {
       handler.destroy();
     };
-  }, [viewer, windLayer]);
+  }, [viewer, windLayer, showInterpolated]);
+
+  const currentData = queryResult ? (showInterpolated ? queryResult.interpolated : queryResult.original) : null;
 
   return (
     <Container>
@@ -190,30 +210,45 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
         )}
         
         {location && (
-          <Space split={<Divider type="vertical" style={{ margin: '0 4px' }} />}>
-            <DataItem>
-              📍 {location.lon.toFixed(1)}°, {location.lat.toFixed(1)}°
-            </DataItem>
+          <DataContainer>
+            <DataGroup>
+              <DataItem>
+                📍 {location.lon.toFixed(1)}°, {location.lat.toFixed(1)}°
+              </DataItem>
+              
+              {queryResult && currentData && (
+                <ToggleButton 
+                  type={showInterpolated ? "primary" : "default"}
+                  onClick={() => setShowInterpolated(!showInterpolated)}
+                >
+                  {showInterpolated ? "Interpolated" : "Original"}
+                </ToggleButton>
+              )}
+            </DataGroup>
             
             {!queryResult && (
               <Text type="secondary" style={{ fontSize: '13px' }}>No data</Text>
             )}
             
-            {queryResult && (
-              <>
-                <DataItem>
-                  💨 {queryResult.speed.toFixed(1)} m/s
+            {queryResult && currentData && (
+              <DataGroup>
+                <DataItem title="Wind Speed">
+                  💨 Speed: {currentData.speed.toFixed(1)} m/s
                 </DataItem>
-                <DataItem>
-                  <DirectionArrow $angle={(queryResult.direction || 0) - 90}>➤</DirectionArrow>
-                  {' '}{queryResult.direction?.toFixed(0)}° ({getCardinalDirection(queryResult.direction || 0)})
+                
+                {currentData.speed > 0 && (
+                  <DataItem title="Wind Direction">
+                    <DirectionArrow $angle={(queryResult.direction || 0) - 90}>➤</DirectionArrow>
+                    {' '}Direction: {queryResult.direction?.toFixed(0)}° ({getCardinalDirection(queryResult.direction || 0)})
+                  </DataItem>
+                )}
+                
+                <DataItem title="UV Vector">
+                  UV Vector: {currentData.u.toFixed(3)}, {currentData.v.toFixed(3)}
                 </DataItem>
-                <DataItem>
-                  UV: {queryResult.u.toFixed(1)}, {queryResult.v.toFixed(1)}
-                </DataItem>
-              </>
+              </DataGroup>
             )}
-          </Space>
+          </DataContainer>
         )}
       </QueryInfo>
 

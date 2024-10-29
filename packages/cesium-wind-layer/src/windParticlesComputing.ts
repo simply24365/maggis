@@ -118,7 +118,7 @@ export class WindParticlesComputing {
           vRange: () => new Cartesian2(this.windData.v.min, this.windData.v.max),
           speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
-          speedScaleFactor: () => this.viewerParameters.pixelSize * this.options.speedFactor,
+          speedScaleFactor: () => (this.viewerParameters.pixelSize + 50) * this.options.speedFactor,
           dimension: () => dimension,
           minimum: () => minimum,
           maximum: () => maximum,
@@ -161,10 +161,6 @@ export class WindParticlesComputing {
           latRange: () => this.viewerParameters.latRange,
           dataLonRange: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.east),
           dataLatRange: () => new Cartesian2(this.windData.bounds.south, this.windData.bounds.north),
-          dimension: () => dimension,
-          minimum: () => minimum,
-          maximum: () => maximum,
-          interval: () => interval,
           randomCoefficient: function () {
             return Math.random();
           },

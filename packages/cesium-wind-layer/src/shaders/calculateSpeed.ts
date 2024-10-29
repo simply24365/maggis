@@ -59,6 +59,11 @@ vec2 bilinearInterpolation(vec2 lonLat) {
     vec2 v01 = getWindComponents(vec2(lon0, lat1));
     vec2 v11 = getWindComponents(vec2(lon1, lat1));
 
+    // Check if all wind vectors are zero
+    if (length(v00) == 0.0 && length(v10) == 0.0 && length(v01) == 0.0 && length(v11) == 0.0) {
+        return vec2(0.0, 0.0);
+    }
+
     // Calculate interpolation weights
     float s = (lon - lon0) / interval.x;
     float t = (lat - lat0) / interval.y;
