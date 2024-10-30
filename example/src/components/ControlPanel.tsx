@@ -85,7 +85,7 @@ const CollapseButton = styled.div<{ $collapsed: boolean }>`
 `;
 
 const CardContent = styled.div<{ $collapsed: boolean }>`
-  max-height: ${props => props.$collapsed ? '0' : 'calc(100vh - 150px)'};
+  max-height: ${props => props.$collapsed ? '0' : 'calc(100vh - 300px)'};
   overflow: auto;
   transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
   padding: ${props => props.$collapsed ? '0 12px' : '12px'};
