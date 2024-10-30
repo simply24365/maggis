@@ -75,7 +75,8 @@ const windLayer = new WindLayer(viewer, windData, {
   dropRateBump: 0.001,       // 慢速粒子的额外消失率
   colors: ['white'],         // 粒子颜色
   flipY: false,              // 是否翻转 Y 坐标
-  domain: undefined          // 速度渲染范围
+  domain: undefined,         // 速度渲染范围
+  displayRange: undefined    // 速度显示范围
 });
 ```
 
@@ -99,6 +100,10 @@ interface WindLayerOptions {
   flipY: boolean;              // 是否翻转 Y 坐标（默认：false）
   useViewerBounds: boolean;    // 是否使用视域范围生成粒子（默认：false）
   domain?: {                   // 速度渲染范围（默认：undefined）
+    min?: number;             // 最小速度值
+    max?: number;             // 最大速度值
+  };
+  displayRange?: {            // 速度显示范围（默认：undefined）
     min?: number;             // 最小速度值
     max?: number;             // 最大速度值
   };

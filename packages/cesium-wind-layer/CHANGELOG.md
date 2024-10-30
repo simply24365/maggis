@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.7.1
+
+### Patch Changes
+
+- fix: update readme, add displayRange param
+
 ## 0.7.0
 
 ### Minor Changes

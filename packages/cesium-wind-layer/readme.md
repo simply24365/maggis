@@ -75,7 +75,8 @@ const windLayer = new WindLayer(viewer, windData, {
   dropRateBump: 0.001,        // Additional drop rate for slow particles
   colors: ['white'],          // Colors for particles
   flipY: false,               // Flip Y coordinates if needed
-  domain: undefined           // Optional: domain for speed
+  domain: undefined,           // Optional: domain for speed
+  displayRange: undefined,     // Optional: display range for speed
 });
 ```
 
@@ -101,6 +102,10 @@ interface WindLayerOptions {
   domain?: {                   // Controls the speed rendering range. Default is undefined.
     min?: number;             // Minimum speed value for rendering
     max?: number;             // Maximum speed value for rendering
+  };
+  displayRange?: {            // Controls the speed display range for visualization. Default is undefined.
+    min?: number;             // Minimum speed value for display
+    max?: number;             // Maximum speed value for display
   };
 }
 ```
