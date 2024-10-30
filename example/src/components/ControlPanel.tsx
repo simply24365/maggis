@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Slider, Switch, Space, Tooltip, Typography, Form, InputNumber } from 'antd';
+import { Card, Switch, Space, Tooltip, Typography, Form, InputNumber } from 'antd';
 import { WindLayer, WindLayerOptions } from 'cesium-wind-layer';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import ColorTableInput from './ColorTableInput';
@@ -295,7 +295,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   </Text>
                 }
               >
-                <Slider min={1} max={500} />
+                <InputNumber />
               </CompactFormItem>
 
               <CompactFormItem
@@ -305,7 +305,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Height of particles above the ground in meters.'
                 )}
               >
-                <Slider min={-1000} max={10000} step={100} />
+                <InputNumber min={-1000} max={10000} step={100} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -315,7 +315,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Width of particle trails in pixels. Controls the width of the particles.'
                 )}
               >
-                <Slider min={0.1} max={100} step={0.1} />
+                <InputNumber min={0.1} max={100} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -325,7 +325,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Factor to adjust the speed of particles. Controls the movement speed of particles.'
                 )}
               >
-                <Slider min={0.1} max={10} step={0.1} />
+                <InputNumber min={0.1} max={10} step={0.1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -335,7 +335,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Rate at which particles are dropped (reset). Controls the lifecycle of particles.'
                 )}
               >
-                <Slider min={0.001} max={0.01} step={0.001} />
+                <InputNumber min={0.001} max={0.01} step={0.001} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -345,7 +345,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Additional drop rate for slow-moving particles. Increases the probability of dropping particles when they move slowly.'
                 )}
               >
-                <Slider min={0} max={0.2} step={0.001} />
+                <InputNumber min={0} max={0.2} step={0.001} />
               </CompactFormItem>
 
               <CompactFormItem
