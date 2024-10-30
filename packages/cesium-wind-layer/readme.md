@@ -124,6 +124,16 @@ interface WindLayerOptions {
 | `isDestroyed(): boolean` | Check if the wind layer has been destroyed |
 | `destroy()` | Clean up resources and destroy the wind layer |
 
+## 🎥 Demo
+
+<video width="100%" controls>
+  <source src="/pictures/demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+You can also try the [online demo](https://cesium-wind-layer.opendde.app/) or check out the [example code](../../example).
+
+
 ## 📄 License
 
 [MIT](/LICENSE)

@@ -124,6 +124,15 @@ interface WindLayerOptions {
 | `isDestroyed(): boolean` | 检查风场图层是否已被销毁 |
 | `destroy()` | 清理资源并销毁风场图层 |
 
+## 🎥 在线演示
+
+<video width="100%" controls>
+  <source src="/pictures/demo.mp4" type="video/mp4">
+  你的浏览器不支持视频标签。
+</video>
+
+你也可以尝试 [在线演示](https://cesium-wind-layer.opendde.app/) 或查看 [示例代码](../../example)。
+
 ## 📄 许可证
 
 [MIT](/LICENSE)
