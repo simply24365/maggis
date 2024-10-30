@@ -1,5 +1,12 @@
 # example
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies
+  - cesium-wind-layer@0.7.2
+
 ## 0.4.2
 
 ### Patch Changes

@@ -3,6 +3,7 @@ import { WindParticlesComputing } from './windParticlesComputing';
 import { WindParticlesRendering } from './windParticlesRendering';
 import CustomPrimitive from './customPrimitive';
 import { ClearCommand, Color, Pass } from 'cesium';
+import { deepMerge } from './utils';
 
 export class WindParticleSystem {
   computing: WindParticlesComputing;
@@ -50,10 +51,7 @@ export class WindParticleSystem {
       maxParticlesChanged = true;
     }
 
-    const newOptions = {
-      ...this.options,
-      ...options
-    }
+    const newOptions = deepMerge(options, this.options);
     if (newOptions.particlesTextureSize < 1) {
       throw new Error('particlesTextureSize must be greater than 0');
     }

@@ -9,6 +9,7 @@ import {
 
 import { WindLayerOptions, WindData, WindDataAtLonLat } from './types';
 import { WindParticleSystem } from './windParticleSystem';
+import { deepMerge } from './utils';
 
 export * from './types';
 
@@ -308,13 +309,17 @@ export class WindLayer {
    */
   updateOptions(options: Partial<WindLayerOptions>): void {
     if (this._isDestroyed) return;
-    this.options = { ...this.options, ...options };
+    this.options = deepMerge(options, this.options);
     this.particleSystem.changeOptions(options);
     this.viewer.scene.requestRender();
     // Dispatch options change event
     this.dispatchEvent('optionsChange', this.options);
   }
 
+  /**
+   * Zoom to the wind data bounds.
+   * @param {number} [duration=0] - The duration of the zoom animation.
+   */
   zoomTo(duration: number = 0): void {
     if (this.windData.bounds) {
       const rectangle = Rectangle.fromDegrees(
@@ -330,6 +335,9 @@ export class WindLayer {
     }
   }
 
+  /**
+   * Add the wind layer to the scene.
+   */
   add(): void {
     this.primitives = this.particleSystem.getPrimitives();
     this.primitives.forEach(primitive => {
@@ -337,6 +345,9 @@ export class WindLayer {
     });
   }
 
+  /**
+   * Remove the wind layer from the scene.
+   */
   remove(): void {
     this.primitives.forEach(primitive => {
       this.scene.primitives.remove(primitive);
@@ -344,10 +355,17 @@ export class WindLayer {
     this.primitives = [];
   }
 
+  /**
+   * Check if the wind layer is destroyed.
+   * @returns {boolean} - True if the wind layer is destroyed, otherwise false.
+   */
   isDestroyed(): boolean {
     return this._isDestroyed;
   }
 
+  /**
+   * Destroy the wind layer and release all resources.
+   */
   destroy(): void {
     this.remove();
     this.removeEventListeners();
@@ -364,6 +382,11 @@ export class WindLayer {
     });
   }
 
+  /**
+   * Add an event listener for the specified event type.
+   * @param {WindLayerEventType} type - The type of event to listen for.
+   * @param {WindLayerEventCallback} callback - The callback function to execute when the event occurs.
+   */
   addEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
     if (!this.eventListeners.has(type)) {
       this.eventListeners.set(type, new Set());
@@ -371,6 +394,11 @@ export class WindLayer {
     this.eventListeners.get(type)?.add(callback);
   }
 
+  /**
+   * Remove an event listener for the specified event type.
+   * @param {WindLayerEventType} type - The type of event to remove.
+   * @param {WindLayerEventCallback} callback - The callback function to remove.
+   */
   removeEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
     this.eventListeners.get(type)?.delete(callback);
   }

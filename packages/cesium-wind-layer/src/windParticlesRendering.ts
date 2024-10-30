@@ -3,6 +3,7 @@ import { WindLayerOptions } from './types';
 import { WindParticlesComputing } from './windParticlesComputing';
 import CustomPrimitive from './customPrimitive';
 import { ShaderManager } from './shaderManager';
+import { deepMerge } from './utils';
 
 export class WindParticlesRendering {
   private context: any;
@@ -251,7 +252,7 @@ export class WindParticlesRendering {
       JSON.stringify(options.colors) !== JSON.stringify(this.options.colors);
 
     // Update options first
-    this.options = { ...this.options, ...options };
+    this.options = deepMerge(options, this.options);
 
     // Then update color table if needed
     if (needUpdateColorTable) {

@@ -2,6 +2,7 @@ import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilte
 import { WindLayerOptions, WindData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
+import { deepMerge } from './utils';
 
 export class WindParticlesComputing {
   context: any;
@@ -221,7 +222,7 @@ export class WindParticlesComputing {
 
   updateOptions(options: Partial<WindLayerOptions>) {
     const needUpdateWindTextures = options.flipY !== this.options.flipY;
-    this.options = { ...this.options, ...options };
+    this.options = deepMerge(options, this.options);
     if (needUpdateWindTextures) {
       this.reCreateWindTextures();
     }

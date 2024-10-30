@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.7.2
+
+### Patch Changes
+
+- fix: resolve options deep copy issue in deepMerge function
+
 ## 0.7.1
 
 ### Patch Changes
