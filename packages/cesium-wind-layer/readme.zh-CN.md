@@ -126,12 +126,9 @@ interface WindLayerOptions {
 
 ## 🎥 在线演示
 
-<video width="100%" controls>
-  <source src="/pictures/demo.mp4" type="video/mp4">
-  你的浏览器不支持视频标签。
-</video>
+https://github.com/user-attachments/assets/64be8661-a080-4318-8b17-4931670570f1
 
-你也可以尝试 [在线演示](https://cesium-wind-layer.opendde.app/) 或查看 [示例代码](../../example)。
+你也可以尝试 [在线演示](https://cesium-wind-layer.opendde.com/) 或查看 [示例代码](../../example)。
 
 ## 📄 许可证
 

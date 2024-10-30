@@ -128,7 +128,7 @@ interface WindLayerOptions {
 
 https://github.com/user-attachments/assets/64be8661-a080-4318-8b17-4931670570f1
 
-You can also try the [online demo](https://cesium-wind-layer.opendde.app/) or check out the [example code](../../example).
+You can also try the [online demo](https://cesium-wind-layer.opendde.com/) or check out the [example code](../../example).
 
 
 ## 📄 License
