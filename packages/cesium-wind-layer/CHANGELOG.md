@@ -1,5 +1,17 @@
 # cesium-wind-layer
 
+## 0.7.0
+
+### Minor Changes
+
+- feat: add domain and displayRange options for wind layer
+  Changes:
+
+  1. domain controls the rendering range for color mapping
+  2. displayRange controls particle visibility
+  3. Both options fallback to data's min/max when undefined
+  4. Early visibility check in fragment shader for better performance
+
 ## 0.6.0
 
 ### Minor Changes

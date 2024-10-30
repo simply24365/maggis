@@ -56,12 +56,12 @@ out vec4 fragColor;
 
 void main() {
     vec2 nextParticle = texture(nextParticlesPosition, v_textureCoordinates).rg;
-    vec3 nextSpeed = texture(particlesSpeed, v_textureCoordinates).rgb;
-    float speedNorm = nextSpeed.b;
+    vec4 nextSpeed = texture(particlesSpeed, v_textureCoordinates);
+    float speedNorm = nextSpeed.a;
     float particleDropRate = dropRate + dropRateBump * speedNorm;
 
     vec2 seed1 = nextParticle.xy + v_textureCoordinates;
-    vec2 seed2 = nextSpeed.xy + v_textureCoordinates;
+    vec2 seed2 = nextSpeed.rg + v_textureCoordinates;
     vec2 randomParticle = generateRandomParticle(seed1);
     float randomNumber = rand(seed2, normalRange);
 

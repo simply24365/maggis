@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Slider, Switch, Space, Tooltip, Typography, Form } from 'antd';
+import { Card, Slider, Switch, Space, Tooltip, Typography, Form, InputNumber } from 'antd';
 import { WindLayer, WindLayerOptions } from 'cesium-wind-layer';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import ColorTableInput from './ColorTableInput';
@@ -391,6 +391,111 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   checkedChildren="View Bounds"
                   unCheckedChildren="Global"
                 />
+              </CompactFormItem>
+
+              <CompactFormItem
+                label={renderLabel(
+                  'Speed Range',
+                  'Controls the speed range for rendering and display.'
+                )}
+              >
+                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                      Rendering Range
+                    </Text>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['domain', 'min']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Min
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={50}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="Min"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['domain', 'max']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Max
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={50}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="Max"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                      Display Range
+                    </Text>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['displayRange', 'min']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Min
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={50}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="Min"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['displayRange', 'max']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Max
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={50}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="Max"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                    </div>
+                  </div>
+                </Space>
               </CompactFormItem>
             </Space>
           </Form>

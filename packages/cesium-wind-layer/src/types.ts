@@ -42,6 +42,24 @@ export interface WindLayerOptions {
    * Whether to use the viewer bounds to generate particles. Default is false.
    */
   useViewerBounds?: boolean;
+  /**
+   * Controls the speed rendering range. Default is undefined.
+   * @property {number} [min] - Minimum speed value for rendering
+   * @property {number} [max] - Maximum speed value for rendering
+   */
+  domain?: {
+    min?: number;
+    max?: number;
+  };
+  /**
+   * Controls the speed display range for visualization. Default is undefined.
+   * @property {number} [min] - Minimum speed value for display
+   * @property {number} [max] - Maximum speed value for display
+   */
+  displayRange?: {
+    min?: number;
+    max?: number;
+  };
 }
 
 export interface WindDataDemention {

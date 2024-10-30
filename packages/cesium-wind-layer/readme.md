@@ -70,11 +70,12 @@ const windLayer = new WindLayer(viewer, windData, {
   particlesTextureSize: 100,  // Size of the particle texture. Determines the maximum number of particles (size squared).
   particleHeight: 1000,       // Height of particles above ground
   lineWidth: 10.0,            // Width of particle trails
-  speedFactor: 1.0,         // Speed multiplier
-  dropRate: 0.003,           // Rate at which particles are dropped
-  dropRateBump: 0.001,       // Additional drop rate for slow particles
-  colors: ['white'],         // Colors for particles
-  flipY: false              // Flip Y coordinates if needed
+  speedFactor: 1.0,           // Speed multiplier
+  dropRate: 0.003,            // Rate at which particles are dropped
+  dropRateBump: 0.001,        // Additional drop rate for slow particles
+  colors: ['white'],          // Colors for particles
+  flipY: false,               // Flip Y coordinates if needed
+  domain: undefined           // Optional: domain for speed
 });
 ```
 
@@ -88,15 +89,19 @@ Main class for wind visualization.
 
 ```typescript
 interface WindLayerOptions {
-  particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). (default: 100)
-  particleHeight: number;        // Height of particles (default: 0)
-  lineWidth: number;            // Width of particle lines (default: 10.0)
-  speedFactor: number;          // Speed multiplier (default: 1.0)
-  dropRate: number;             // Particle drop rate (default: 0.003)
-  dropRateBump: number;         // Additional drop rate (default: 0.001)
-  colors: string[];            // Array of colors for particles
-  flipY: boolean;              // Flip Y coordinates (default: false)
-  useViewerBounds: boolean;    // Use viewer bounds to generate particles (default: false)
+  particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). Default is 100.
+  particleHeight: number;        // Height of particles above the ground in meters. Default is 0.
+  lineWidth: number;            // Width of particle trails in pixels. Default is 10.0.
+  speedFactor: number;          // Factor to adjust the speed of particles. Default is 1.0.
+  dropRate: number;             // Rate at which particles are dropped (reset). Default is 0.003.
+  dropRateBump: number;         // Additional drop rate for slow-moving particles. Default is 0.001.
+  colors: string[];            // Array of colors for particles. Can be used to create color gradients. Default is ['white'].
+  flipY: boolean;              // Whether to flip the Y-axis of the wind data. Default is false.
+  useViewerBounds: boolean;    // Whether to use the viewer bounds to generate particles. Default is false.
+  domain?: {                   // Controls the speed rendering range. Default is undefined.
+    min?: number;             // Minimum speed value for rendering
+    max?: number;             // Maximum speed value for rendering
+  };
 }
 ```
 

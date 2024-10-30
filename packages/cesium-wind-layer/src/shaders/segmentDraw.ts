@@ -16,7 +16,7 @@ uniform float lineWidth;
 uniform bool is3D;
 
 // 添加输出变量传递给片元着色器
-out float speedNormalization;
+out vec2 speed;
 out float v_segmentPosition;
 out vec2 textureCoordinate;
 
@@ -115,7 +115,7 @@ void main() {
     vec4 offset = vec4(0.0);
 
     // 计算速度相关的宽度和长度因子
-    float speedFactor = max(0.3, speedNormalization);
+    float speedFactor = max(0.3, speed.y);
     float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
     
     // Modify length calculation with constraints
@@ -148,7 +148,7 @@ void main() {
         v_segmentPosition = 1.0; // 尾部
     }
 
-    speedNormalization = texture(particlesSpeed, particleIndex).b;
+    speed = texture(particlesSpeed, particleIndex).ba;
     textureCoordinate = st;
 }
 `;
@@ -156,10 +156,12 @@ void main() {
 export const renderParticlesFragmentShader = /*glsl*/`#version 300 es
 precision highp float;
 
-in float speedNormalization;
+in vec2 speed;
 in float v_segmentPosition;
 in vec2 textureCoordinate;
 
+uniform vec2 domain;
+uniform vec2 displayRange;
 uniform sampler2D colorTable;
 uniform sampler2D segmentsDepthTexture;
 
@@ -167,15 +169,17 @@ out vec4 fragColor;
 
 void main() {
     const float zero = 0.0;
-    if(speedNormalization > zero) {
-        vec4 baseColor = texture(colorTable, vec2(speedNormalization, zero));
+    if(speed.y > zero && speed.x > displayRange.x && speed.x < displayRange.y) {
+        float speedLength = clamp(speed.x, domain.x, domain.y);
+        float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
+        vec4 baseColor = texture(colorTable, vec2(normalizedSpeed, zero));
 
         // 使用更平滑的渐变效果
         float alpha = smoothstep(0.0, 1.0, v_segmentPosition);
         alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
 
         // 根据速度调整透明度
-        float speedAlpha = mix(0.3, 1.0, speedNormalization);
+        float speedAlpha = mix(0.3, 1.0, speed.y);
 
         // 组合颜色和透明度
         fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha);

@@ -32,6 +32,10 @@ const defaultOptions: Partial<WindLayerOptions> = {
   colors: colorSchemes[3].colors,
   flipY: true,
   useViewerBounds: true,
+  domain: {
+    min: 0,
+    max: 8,
+  },
 };
 
 export function Earth() {

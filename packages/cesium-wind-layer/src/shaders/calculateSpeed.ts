@@ -117,14 +117,16 @@ vec2 calculateSpeedByRungeKutta2(vec2 lonLat) {
 }
 
 
-float calculateWindNorm(vec2 speed) {
-    vec3 percent = vec3(0.0);
+vec2 calculateWindNorm(vec2 speed) {
     float speedLength = length(speed.xy);
     if(speedLength == 0.0){
-      return 0.0;
+      return vec2(0.0);
     }
 
-    return (speedLength - speedRange.x) / (speedRange.y - speedRange.x);
+    // Clamp speedLength to range
+    float clampedSpeed = clamp(speedLength, speedRange.x, speedRange.y);
+    float normalizedSpeed = (clampedSpeed - speedRange.x) / (speedRange.y - speedRange.x);
+    return vec2(speedLength, normalizedSpeed);
 }
 
 out vec4 fragColor;
@@ -136,7 +138,7 @@ void main() {
     vec2 speed = calculateSpeedByRungeKutta2(lonLat);
     vec2 speedInLonLat = convertSpeedUnitToLonLat(lonLat, speed);
 
-    vec3 particleSpeed = vec3(speedInLonLat, calculateWindNorm(speed / speedScaleFactor));
-    fragColor = vec4(speedInLonLat, calculateWindNorm(speedOrigin), 0.0);
+    vec4 particleSpeed = vec4(speedInLonLat, calculateWindNorm(speed / speedScaleFactor));
+    fragColor = vec4(speedInLonLat, calculateWindNorm(speedOrigin));
 }
 `;

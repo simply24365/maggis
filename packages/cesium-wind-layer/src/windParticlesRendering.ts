@@ -1,4 +1,4 @@
-import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, SceneMode, TextureWrap, VertexArray, BufferUsage } from 'cesium';
+import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, SceneMode, TextureWrap, VertexArray, BufferUsage, Cartesian2 } from 'cesium';
 import { WindLayerOptions } from './types';
 import { WindParticlesComputing } from './windParticlesComputing';
 import CustomPrimitive from './customPrimitive';
@@ -189,6 +189,17 @@ export class WindParticlesRendering {
         postProcessingPosition: () => this.computing.particlesTextures.postProcessingPosition,
         particlesSpeed: () => this.computing.particlesTextures.particlesSpeed,
         colorTable: () => this.colorTable,
+        domain: () => {
+          const domain = new Cartesian2(this.options.domain?.min ?? this.computing.windData.speed.min, this.options.domain?.max ?? this.computing.windData.speed.max);
+          return domain;
+        },
+        displayRange: () => {
+          const displayRange = new Cartesian2(
+            this.options.displayRange?.min ?? this.computing.windData.speed.min,
+            this.options.displayRange?.max ?? this.computing.windData.speed.max
+          );
+          return displayRange;
+        },
         particleHeight: () => this.options.particleHeight || 0,
         aspect: () => this.context.drawingBufferWidth / this.context.drawingBufferHeight,
         pixelSize: () => this.viewerParameters.pixelSize,

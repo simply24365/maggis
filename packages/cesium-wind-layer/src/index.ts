@@ -40,7 +40,9 @@ export class WindLayer {
     lineWidth: 10.0,
     colors: ['white'],
     flipY: false,
-    useViewerBounds: false // 默认使用全局范围
+    useViewerBounds: false,
+    domain: undefined,
+    displayRange: undefined
   }
 
   viewer: Viewer;
@@ -109,8 +111,7 @@ export class WindLayer {
   }
 
   private processWindData(windData: WindData): Required<WindData> {
-    if (windData.speed?.min === undefined || windData.speed?.max === undefined) {
-      console.info('no speed data, calculate speed...');
+    if (windData.speed?.min === undefined || windData.speed?.max === undefined || windData.speed.array === undefined) {
       const speed = {
         array: new Float32Array(windData.u.array.length),
         min: Number.MAX_VALUE,
@@ -123,11 +124,9 @@ export class WindLayer {
           speed.max = Math.max(speed.max, speed.array[i]);
         }
       }
-      return {
-        ...windData,
-        speed
-      }
+      windData = { ...windData, speed };
     }
+
     return windData as Required<WindData>;
   }
 
@@ -295,6 +294,7 @@ export class WindLayer {
    * @param {WindData} data - The new wind data to apply.
    */
   updateWindData(data: WindData): void {
+    if (this._isDestroyed) return;
     this.windData = this.processWindData(data);
     this.particleSystem.computing.updateWindData(this.windData);
     this.viewer.scene.requestRender();
@@ -307,6 +307,7 @@ export class WindLayer {
    * @param {Partial<WindLayerOptions>} options - The new options to apply.
    */
   updateOptions(options: Partial<WindLayerOptions>): void {
+    if (this._isDestroyed) return;
     this.options = { ...this.options, ...options };
     this.particleSystem.changeOptions(options);
     this.viewer.scene.requestRender();
