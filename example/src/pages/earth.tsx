@@ -22,29 +22,69 @@ const CesiumContainer = styled.div`
   overflow: hidden;
 `;
 
+const SwitchButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1000;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+`;
+
+// Add data configurations
+const dataConfigs = {
+  wind: {
+    options: {
+      domain: {
+        min: 0,
+        max: 8,
+      },
+      speedFactor: 0.8,
+    },
+    file: '/wind.json'
+  },
+  ocean: {
+    options: {
+      domain: {
+        min: 0,
+        max: 1,
+      },
+      speedFactor: 8,
+    },
+    file: '/ocean.json'
+  }
+};
+
 const defaultOptions: Partial<WindLayerOptions> = {
   particlesTextureSize: 200,
   dropRate: 0.003,
   particleHeight: 1000,
   dropRateBump: 0.01,
-  speedFactor: 0.5,
   lineWidth: 10.0,
   colors: colorSchemes[3].colors,
   flipY: true,
   useViewerBounds: true,
-  domain: {
-    min: 0,
-    max: 8,
-  },
+  // Remove domain and speedFactor from here since they will be set dynamically
 };
 
 export function Earth() {
   const viewerRef = useRef<Viewer | null>(null);
   const windLayerRef = useRef<WindLayer | null>(null);
   const [, setIsWindLayerReady] = useState(false);
-  const dataIndexRef = useRef(0);
-  const windDataFiles = ['/wind.json', '/wind2.json'];
+  const windDataFiles = [dataConfigs.wind.file, dataConfigs.ocean.file];
   const isFirstLoadRef = useRef(true);
+  const [currentDataIndex, setCurrentDataIndex] = useState(0);
+  const [currentOptions, setCurrentOptions] = useState<WindLayerOptions>({
+    ...defaultOptions,
+    ...dataConfigs.wind.options
+  } as WindLayerOptions);
 
   useEffect(() => {
     let isComponentMounted = true;
@@ -98,6 +138,13 @@ export function Earth() {
           }
         };
 
+        // Apply initial options with wind configuration
+        const initialOptions = {
+          ...defaultOptions,
+          ...dataConfigs.wind.options
+        };
+        setCurrentOptions(initialOptions as WindLayerOptions);
+
         if (isFirstLoadRef.current && windData.bounds) {
           const rectangle = Rectangle.fromDegrees(
             windData.bounds.west,
@@ -112,7 +159,7 @@ export function Earth() {
           isFirstLoadRef.current = false;
         }
 
-        const layer = new WindLayer(viewerRef.current, windData, defaultOptions);
+        const layer = new WindLayer(viewerRef.current, windData, initialOptions);
         
         // Add event listeners
         layer.addEventListener('dataChange', (data) => {
@@ -132,41 +179,12 @@ export function Earth() {
       }
     };
 
-    const updateWindData = async () => {
-      try {
-        const nextIndex = (dataIndexRef.current + 1) % windDataFiles.length;
-        const res = await fetch(windDataFiles[nextIndex]);
-        const data = await res.json();
-
-        if (!isComponentMounted || !windLayerRef.current) return;
-
-        const windData: WindData = {
-          ...data,
-          bounds: {
-            west: data.bbox[0],
-            south: data.bbox[1],
-            east: data.bbox[2],
-            north: data.bbox[3],
-          }
-        };
-
-        windLayerRef.current.updateWindData(windData);
-        dataIndexRef.current = nextIndex;
-      } catch (error) {
-        console.error('Failed to update wind data:', error);
-      }
-    };
-
     // Initialize wind layer
     initWindLayer();
-
-    // Set up interval to update data
-    const intervalId = setInterval(updateWindData, 3000);
 
     return () => {
       isComponentMounted = false;
       isFirstLoadRef.current = true;
-      clearInterval(intervalId);
       
       if (windLayerRef.current) {
         windLayerRef.current.destroy();
@@ -181,13 +199,59 @@ export function Earth() {
     };
   }, []);
 
+  const handleOptionsChange = (changedOptions: Partial<WindLayerOptions>) => {
+    setCurrentOptions({
+      ...currentOptions,
+      ...changedOptions
+    });
+  };
+
+  const handleSwitchData = async () => {
+    try {
+      const nextIndex = (currentDataIndex + 1) % windDataFiles.length;
+      const res = await fetch(windDataFiles[nextIndex]);
+      const data = await res.json();
+
+      if (!windLayerRef.current) return;
+
+      const windData: WindData = {
+        ...data,
+        bounds: {
+          west: data.bbox[0],
+          south: data.bbox[1],
+          east: data.bbox[2],
+          north: data.bbox[3],
+        }
+      };
+
+      // Get the correct configuration based on the next index
+      const configKey = nextIndex === 0 ? 'wind' : 'ocean';
+      const newOptions = {
+        ...currentOptions, // Keep current options
+        ...dataConfigs[configKey].options // Only override specific options
+      };
+
+      // Update both the wind data and options
+      windLayerRef.current.updateOptions(newOptions);
+      windLayerRef.current.updateWindData(windData);
+      setCurrentOptions(newOptions);
+      setCurrentDataIndex(nextIndex);
+    } catch (error) {
+      console.error('Failed to switch wind data:', error);
+    }
+  };
+
   return (
     <PageContainer>
       <SpeedQuery windLayer={windLayerRef.current} viewer={viewerRef.current} />
       <CesiumContainer id="cesiumContainer">
+        <SwitchButton onClick={handleSwitchData}>
+          Switch to {currentDataIndex === 0 ? 'Ocean' : 'Wind'} Data
+        </SwitchButton>
         <ControlPanel
           windLayer={windLayerRef.current}
-          initialOptions={defaultOptions}
+          initialOptions={currentOptions}
+          onOptionsChange={handleOptionsChange}
         />
       </CesiumContainer>
     </PageContainer>

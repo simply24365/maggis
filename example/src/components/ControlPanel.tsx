@@ -188,11 +188,13 @@ const TitleButton = styled.button`
 interface ControlPanelProps {
   windLayer: WindLayer | null;
   initialOptions?: Partial<WindLayerOptions>;
+  onOptionsChange?: (options: Partial<WindLayerOptions>) => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   windLayer,
   initialOptions,
+  onOptionsChange,
 }) => {
   const [form] = Form.useForm();
   const [options, setOptions] = useState<WindLayerOptions>({
@@ -204,13 +206,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const allValues = {
-      ...WindLayer.defaultOptions,
-      ...initialOptions,
-    };
-    setOptions(allValues);
-    form.setFieldsValue(allValues);
-  }, [windLayer, initialOptions]);
+    if (initialOptions) {
+      const newOptions = {
+        ...options,
+        ...initialOptions,
+      };
+      setOptions(newOptions);
+      form.setFieldsValue(newOptions);
+    }
+  }, [initialOptions]);
 
   const renderLabel = (label: string, tooltip: string) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -229,6 +233,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     } else {
       windLayer?.updateOptions(changedValues);
     }
+
+    onOptionsChange?.(changedValues);
   };
 
   return (
