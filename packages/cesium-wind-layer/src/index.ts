@@ -92,7 +92,7 @@ export class WindLayer {
     };
     this.updateViewerParameters();
 
-    this.particleSystem = new WindParticleSystem(this.scene.context, this.windData, this.options, this.viewerParameters);
+    this.particleSystem = new WindParticleSystem(this.scene.context, this.windData, this.options, this.viewerParameters, this.scene);
     this.add();
 
     this.setupEventListeners();

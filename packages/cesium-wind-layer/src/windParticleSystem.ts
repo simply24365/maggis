@@ -11,11 +11,11 @@ export class WindParticleSystem {
   options: WindLayerOptions;
   viewerParameters: any;
   context: any;
-  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
+  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any, scene: any) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
-    this.computing = new WindParticlesComputing(context, windData, options, viewerParameters);
+    this.computing = new WindParticlesComputing(context, windData, options, viewerParameters, scene);
     this.rendering = new WindParticlesRendering(context, options, viewerParameters, this.computing);
     this.clearFramebuffers();
   }

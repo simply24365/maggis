@@ -1,4 +1,4 @@
-import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilter, TextureMinificationFilter, Cartesian2 } from 'cesium';
+import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilter, TextureMinificationFilter, Cartesian2, FrameRateMonitor } from 'cesium';
 import { WindLayerOptions, WindData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
@@ -26,16 +26,22 @@ export class WindParticlesComputing {
   };
   private bounds: WindData['bounds'];
   windData: Required<WindData>;
+  private frameRateMonitor: FrameRateMonitor;
   private frameRate: number = 60;
   private frameRateAdjustment: number = 1;
 
-  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any) {
+  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any, scene: any) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
     this.bounds = windData.bounds;
     this.windData = windData;
 
+    this.frameRateMonitor = new FrameRateMonitor({
+      scene: scene,
+      samplingWindow: 1.0,
+      quietPeriod: 0.0
+    });
     this.initFrameRate();
     this.createWindTextures();
     this.createParticlesTextures();
@@ -43,28 +49,35 @@ export class WindParticlesComputing {
   }
 
   private initFrameRate() {
-    let times: number[] = [];
-    let frameCount = 0;
+    let lastUpdate = performance.now();
+    const updateInterval = 1000; // Update every 1000ms (1 second)
 
-    const measureFrameRate = (timestamp: number) => {
-      times.push(timestamp);
-      frameCount++;
+    const updateFrameRate = () => {
+      const currentTime = performance.now();
+      const deltaTime = currentTime - lastUpdate;
 
-      // Keep only the times in the last second
-      const now = timestamp;
-      times = times.filter(t => now - t < 1000);
-
-      if (frameCount >= 120) { // Measure over more frames for better accuracy
-        // Calculate FPS based on the number of frames in the last second
-        this.frameRate = Math.round(times.length);
-        this.frameRateAdjustment = 60 / this.frameRate;
-        return;
+      // Only update frame rate once per second
+      if (deltaTime >= updateInterval) {
+        if (this.frameRateMonitor.lastFramesPerSecond) {
+          this.frameRate = this.frameRateMonitor.lastFramesPerSecond;
+          this.frameRateAdjustment = 60 / Math.max(this.frameRate, 1);
+        }
+        lastUpdate = currentTime;
       }
 
-      requestAnimationFrame(measureFrameRate);
+      requestAnimationFrame(updateFrameRate);
     };
 
-    requestAnimationFrame(measureFrameRate);
+    updateFrameRate();
+
+    // Monitor frame rate changes
+    this.frameRateMonitor.lowFrameRate.addEventListener((scene, frameRate) => {
+      console.warn(`Low frame rate detected: ${frameRate} FPS`);
+    });
+
+    this.frameRateMonitor.nominalFrameRate.addEventListener((scene, frameRate) => {
+      console.log(`Frame rate returned to normal: ${frameRate} FPS`);
+    });
   }
 
   createWindTextures() {
@@ -259,5 +272,6 @@ export class WindParticlesComputing {
     Object.values(this.windTextures).forEach(texture => texture.destroy());
     Object.values(this.particlesTextures).forEach(texture => texture.destroy());
     Object.values(this.primitives).forEach(primitive => primitive.destroy());
+    this.frameRateMonitor.destroy();
   }
 }
