@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.7.3
+
+### Patch Changes
+
+- fix: frame rate calculate
+
 ## 0.7.2
 
 ### Patch Changes
