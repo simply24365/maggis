@@ -1,5 +1,13 @@
 # example
 
+## 0.4.6
+
+### Patch Changes
+
+- fix: reduce unnecessary texture recreation
+- Updated dependencies
+  - cesium-wind-layer@0.7.5
+
 ## 0.4.5
 
 ### Patch Changes

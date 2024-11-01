@@ -6,6 +6,7 @@ import ColorTableInput from './ColorTableInput';
 import styled from 'styled-components';
 import { ZoomInOutlined } from '@ant-design/icons';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import NumberInput from './NumberInput';
 
 const { Text } = Typography;
 
@@ -301,7 +302,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   </Text>
                 }
               >
-                <InputNumber />
+                <NumberInput min={1} max={2000} step={10} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -311,7 +312,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Height of particles above the ground in meters.'
                 )}
               >
-                <InputNumber min={-1000} max={10000} step={100} />
+                <NumberInput min={-1000} max={10000} step={100} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -321,7 +322,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Width of particle trails in pixels. Controls the width of the particles.'
                 )}
               >
-                <InputNumber min={0.1} max={100} step={0.1} />
+                <NumberInput min={0.1} max={100} step={0.1} precision={1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -331,7 +332,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Factor to adjust the speed of particles. Controls the movement speed of particles.'
                 )}
               >
-                <InputNumber min={0.1} max={10} step={0.1} />
+                <NumberInput min={0.1} max={10} step={0.1} precision={1} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -341,7 +342,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Rate at which particles are dropped (reset). Controls the lifecycle of particles.'
                 )}
               >
-                <InputNumber min={0.001} max={0.01} step={0.001} />
+                <NumberInput min={0.001} max={0.01} step={0.001} precision={3} />
               </CompactFormItem>
 
               <CompactFormItem
@@ -351,7 +352,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Additional drop rate for slow-moving particles. Increases the probability of dropping particles when they move slowly.'
                 )}
               >
-                <InputNumber min={0} max={0.2} step={0.001} />
+                <NumberInput min={0} max={0.2} step={0.001} precision={3} />
               </CompactFormItem>
 
               <CompactFormItem

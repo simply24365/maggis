@@ -1,5 +1,11 @@
 # cesium-wind-layer
 
+## 0.7.5
+
+### Patch Changes
+
+- fix: reduce unnecessary texture recreation
+
 ## 0.7.4
 
 ### Patch Changes

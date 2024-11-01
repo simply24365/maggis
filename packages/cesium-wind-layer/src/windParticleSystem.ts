@@ -47,7 +47,7 @@ export class WindParticleSystem {
 
   changeOptions(options: Partial<WindLayerOptions>) {
     let maxParticlesChanged = false;
-    if (this.options.particlesTextureSize && this.options.particlesTextureSize !== options.particlesTextureSize) {
+    if (options.particlesTextureSize && this.options.particlesTextureSize !== options.particlesTextureSize) {
       maxParticlesChanged = true;
     }
 

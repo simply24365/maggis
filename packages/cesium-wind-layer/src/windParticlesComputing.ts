@@ -49,7 +49,7 @@ export class WindParticlesComputing {
   private initFrameRate() {
     const updateFrameRate = () => {
       // avoid update frame rate when frame rate is too low
-      if (this.frameRateMonitor.lastFramesPerSecond > 50) {
+      if (this.frameRateMonitor.lastFramesPerSecond > 20) {
         this.frameRate = this.frameRateMonitor.lastFramesPerSecond;
         this.frameRateAdjustment = 60 / Math.max(this.frameRate, 1);
       }
@@ -223,7 +223,7 @@ export class WindParticlesComputing {
   }
 
   updateOptions(options: Partial<WindLayerOptions>) {
-    const needUpdateWindTextures = options.flipY !== this.options.flipY;
+    const needUpdateWindTextures = options.flipY !== undefined && options.flipY !== this.options.flipY;
     this.options = deepMerge(options, this.options);
     if (needUpdateWindTextures) {
       this.reCreateWindTextures();
