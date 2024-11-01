@@ -312,7 +312,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   'Height of particles above the ground in meters.'
                 )}
               >
-                <NumberInput min={-1000} max={10000} step={100} />
+                <NumberInput min={-1000} max={10000} step={1} />
               </CompactFormItem>
 
               <CompactFormItem

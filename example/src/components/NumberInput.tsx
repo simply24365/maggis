@@ -42,7 +42,7 @@ const NumberInput: React.FC<NumberInputProps> = ({
   min,
   max,
   step = 1,
-  precision = 0,
+  precision,
 }) => {
   const handleInputNumberChange = (val: number | null) => {
     if (val !== null && onChange) {
