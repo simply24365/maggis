@@ -26,8 +26,8 @@ export class WindParticlesComputing {
   };
   windData: Required<WindData>;
   private frameRateMonitor: FrameRateMonitor;
-  private frameRate: number = 60;
-  private frameRateAdjustment: number = 1;
+  frameRate: number = 60;
+  frameRateAdjustment: number = 1;
 
   constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any, scene: any) {
     this.context = context;
@@ -150,8 +150,9 @@ export class WindParticlesComputing {
           speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
           speedScaleFactor: () => {
-            return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor * this.frameRateAdjustment;
+            return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor;
           },
+          frameRateAdjustment: () => this.frameRateAdjustment,
           dimension: () => new Cartesian2(this.windData.width, this.windData.height),
           minimum: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.south),
           maximum: () => new Cartesian2(this.windData.bounds.east, this.windData.bounds.north),

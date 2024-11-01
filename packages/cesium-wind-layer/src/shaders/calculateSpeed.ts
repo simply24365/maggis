@@ -13,6 +13,7 @@ uniform vec2 minimum; // minimum of each dimension
 uniform vec2 maximum; // maximum of each dimension
 
 uniform float speedScaleFactor;
+uniform float frameRateAdjustment;
 
 in vec2 v_textureCoordinates;
 
@@ -142,10 +143,9 @@ void main() {
     // texture coordinate must be normalized
     vec2 lonLat = texture(currentParticlesPosition, v_textureCoordinates).rg;
     vec2 speedOrigin = bilinearInterpolation(lonLat);
-    vec2 speed = calculateSpeedByRungeKutta2(lonLat);
+    vec2 speed = calculateSpeedByRungeKutta2(lonLat) * frameRateAdjustment;
     vec2 speedInLonLat = convertSpeedUnitToLonLat(lonLat, speed);
 
-    vec4 particleSpeed = vec4(speedInLonLat, calculateWindNorm(speed / speedScaleFactor));
     fragColor = vec4(speedInLonLat, calculateWindNorm(speedOrigin));
 }
 `;

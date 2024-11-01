@@ -1,5 +1,15 @@
 # cesium-wind-layer
 
+## 0.7.6
+
+### Patch Changes
+
+- fix: normalize particle speed and length across different refresh rates
+
+  - Add frameRateAdjustment uniform to normalize particle movement
+  - Adjust trail length calculation based on frame rate
+  - Ensure consistent particle behavior regardless of display refresh rate
+
 ## 0.7.5
 
 ### Patch Changes

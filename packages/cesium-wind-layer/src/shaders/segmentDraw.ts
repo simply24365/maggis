@@ -9,6 +9,7 @@ uniform sampler2D currentParticlesPosition;
 uniform sampler2D postProcessingPosition;
 uniform sampler2D particlesSpeed;
 
+uniform float frameRateAdjustment;
 uniform float particleHeight;
 uniform float aspect;
 uniform float pixelSize;
@@ -117,11 +118,11 @@ void main() {
     // 计算速度相关的宽度和长度因子
     float speedFactor = max(0.3, speed.y);
     float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
-    
+
     // Modify length calculation with constraints
     float baseLengthFactor = 10.0;
     float speedBasedLength = baseLengthFactor * speedFactor;
-    float lengthFactor = clamp(speedBasedLength, 10.0, 100.0);
+    float lengthFactor = clamp(speedBasedLength, 10.0, 100.0) / frameRateAdjustment;
 
     if (pointToUse == 1) {
         // 头部位置

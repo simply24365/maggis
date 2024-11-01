@@ -189,6 +189,7 @@ export class WindParticlesRendering {
         currentParticlesPosition: () => this.computing.particlesTextures.currentParticlesPosition,
         postProcessingPosition: () => this.computing.particlesTextures.postProcessingPosition,
         particlesSpeed: () => this.computing.particlesTextures.particlesSpeed,
+        frameRateAdjustment: () => this.computing.frameRateAdjustment,
         colorTable: () => this.colorTable,
         domain: () => {
           const domain = new Cartesian2(this.options.domain?.min ?? this.computing.windData.speed.min, this.options.domain?.max ?? this.computing.windData.speed.max);
