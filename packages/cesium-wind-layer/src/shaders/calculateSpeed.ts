@@ -11,17 +11,22 @@ uniform vec2 speedRange; // (min, max)
 uniform vec2 dimension; // (lon, lat)
 uniform vec2 minimum; // minimum of each dimension
 uniform vec2 maximum; // maximum of each dimension
-uniform vec2 interval; // interval of each dimension
 
 uniform float speedScaleFactor;
 
 in vec2 v_textureCoordinates;
+
+vec2 getInterval(vec2 maximum, vec2 minimum, vec2 dimension) {
+    return (maximum - minimum) / (dimension - 1.0);
+}
 
 vec2 mapPositionToNormalizedIndex2D(vec2 lonLat) {
     // ensure the range of longitude and latitude
     lonLat.x = clamp(lonLat.x, minimum.x, maximum.x);
     lonLat.y = clamp(lonLat.y,  minimum.y, maximum.y);
 
+    vec2 interval = getInterval(maximum, minimum, dimension);
+    
     vec2 index2D = vec2(0.0);
     index2D.x = (lonLat.x - minimum.x) / interval.x;
     index2D.y = (lonLat.y - minimum.y) / interval.y;
@@ -46,6 +51,8 @@ vec2 getWindComponents(vec2 lonLat) {
 vec2 bilinearInterpolation(vec2 lonLat) {
     float lon = lonLat.x;
     float lat = lonLat.y;
+
+    vec2 interval = getInterval(maximum, minimum, dimension);
 
     // Calculate grid cell coordinates
     float lon0 = floor(lon / interval.x) * interval.x;

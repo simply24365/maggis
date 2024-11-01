@@ -1,5 +1,16 @@
 # cesium-wind-layer
 
+## 0.7.4
+
+### Patch Changes
+
+- fix: optimize frame rate calculation and shader performance
+
+  - Remove redundant interval uniform from shader
+  - Calculate interval directly in shader to reduce data transfer
+  - Only update frame rate when FPS > 50 to avoid performance degradation
+  - Replace requestAnimationFrame with setInterval for stable frame rate updates
+
 ## 0.7.3
 
 ### Patch Changes

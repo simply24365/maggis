@@ -24,7 +24,6 @@ export class WindParticlesComputing {
     updatePosition: CustomPrimitive;
     postProcessingPosition: CustomPrimitive;
   };
-  private bounds: WindData['bounds'];
   windData: Required<WindData>;
   private frameRateMonitor: FrameRateMonitor;
   private frameRate: number = 60;
@@ -34,7 +33,6 @@ export class WindParticlesComputing {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
-    this.bounds = windData.bounds;
     this.windData = windData;
 
     this.frameRateMonitor = new FrameRateMonitor({
@@ -49,26 +47,19 @@ export class WindParticlesComputing {
   }
 
   private initFrameRate() {
-    let lastUpdate = performance.now();
-    const updateInterval = 1000; // Update every 1000ms (1 second)
-
     const updateFrameRate = () => {
-      const currentTime = performance.now();
-      const deltaTime = currentTime - lastUpdate;
-
-      // Only update frame rate once per second
-      if (deltaTime >= updateInterval) {
-        if (this.frameRateMonitor.lastFramesPerSecond) {
-          this.frameRate = this.frameRateMonitor.lastFramesPerSecond;
-          this.frameRateAdjustment = 60 / Math.max(this.frameRate, 1);
-        }
-        lastUpdate = currentTime;
+      // avoid update frame rate when frame rate is too low
+      if (this.frameRateMonitor.lastFramesPerSecond > 50) {
+        this.frameRate = this.frameRateMonitor.lastFramesPerSecond;
+        this.frameRateAdjustment = 60 / Math.max(this.frameRate, 1);
       }
+    }
 
-      requestAnimationFrame(updateFrameRate);
-    };
-
+    // Initial frame rate calculation
     updateFrameRate();
+
+    // Use setInterval instead of requestAnimationFrame
+    const intervalId = setInterval(updateFrameRate, 1000);
 
     // Monitor frame rate changes
     this.frameRateMonitor.lowFrameRate.addEventListener((scene, frameRate) => {
@@ -78,6 +69,13 @@ export class WindParticlesComputing {
     this.frameRateMonitor.nominalFrameRate.addEventListener((scene, frameRate) => {
       console.log(`Frame rate returned to normal: ${frameRate} FPS`);
     });
+
+    // Add cleanup method to destroy
+    const originalDestroy = this.destroy.bind(this);
+    this.destroy = () => {
+      clearInterval(intervalId);
+      originalDestroy();
+    };
   }
 
   createWindTextures() {
@@ -141,14 +139,6 @@ export class WindParticlesComputing {
   }
 
   createComputingPrimitives() {
-    const dimension = new Cartesian2(this.windData.width, this.windData.height);
-    const minimum = new Cartesian2(this.bounds.west, this.bounds.south);
-    const maximum = new Cartesian2(this.bounds.east, this.bounds.north);
-    const interval = new Cartesian2(
-      (maximum.x - minimum.x) / (dimension.x - 1),
-      (maximum.y - minimum.y) / (dimension.y - 1)
-    );
-
     this.primitives = {
       calculateSpeed: new CustomPrimitive({
         commandType: 'Compute',
@@ -162,10 +152,9 @@ export class WindParticlesComputing {
           speedScaleFactor: () => {
             return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor * this.frameRateAdjustment;
           },
-          dimension: () => dimension,
-          minimum: () => minimum,
-          maximum: () => maximum,
-          interval: () => interval,
+          dimension: () => new Cartesian2(this.windData.width, this.windData.height),
+          minimum: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.south),
+          maximum: () => new Cartesian2(this.windData.bounds.east, this.windData.bounds.north),
         },
         fragmentShaderSource: ShaderManager.getCalculateSpeedShader(),
         outputTexture: this.particlesTextures.particlesSpeed,
