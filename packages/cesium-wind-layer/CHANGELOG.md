@@ -1,5 +1,22 @@
 # cesium-wind-layer
 
+## 0.8.0
+
+### Minor Changes
+
+- 770381e: feat: add dynamic option to control particle animation
+
+  - Add new `dynamic` option to WindLayerOptions to control particle animation state
+  - Add dynamic switch control in ControlPanel component
+  - Set default value of dynamic option to true
+  - Update types and documentation
+
+  This change allows users to toggle between animated and static particle states.
+
+### Patch Changes
+
+- 7fc0dbf: fix: dont limit cesium version
+
 ## 0.7.6
 
 ### Patch Changes
