@@ -14,10 +14,12 @@ uniform float particleHeight;
 uniform float aspect;
 uniform float pixelSize;
 uniform float lineWidth;
+uniform vec2 lineLength;
+uniform vec2 domain;
 uniform bool is3D;
 
 // 添加输出变量传递给片元着色器
-out vec2 speed;
+out vec4 speed;
 out float v_segmentPosition;
 out vec2 textureCoordinate;
 
@@ -91,6 +93,7 @@ void main() {
     vec2 flippedIndex = vec2(st.x, 1.0 - st.y);
 
     vec2 particleIndex = flippedIndex;
+    speed = texture(particlesSpeed, particleIndex);
 
     vec2 previousPosition = texture(previousParticlesPosition, particleIndex).rg;
     vec2 currentPosition = texture(currentParticlesPosition, particleIndex).rg;
@@ -116,13 +119,12 @@ void main() {
     vec4 offset = vec4(0.0);
 
     // 计算速度相关的宽度和长度因子
-    float speedFactor = max(0.3, speed.y);
     float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
 
-    // Modify length calculation with constraints
-    float baseLengthFactor = 10.0;
-    float speedBasedLength = baseLengthFactor * speedFactor;
-    float lengthFactor = clamp(speedBasedLength, 10.0, 100.0) / frameRateAdjustment;
+    // Calculate length based on speed
+    float speedLength = clamp(speed.b, domain.x, domain.y);
+    float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
+    float lengthFactor = mix(lineLength.x, lineLength.y, normalizedSpeed) * pixelSize;
 
     if (pointToUse == 1) {
         // 头部位置
@@ -130,26 +132,25 @@ void main() {
             projectedCoordinates.previous,
             projectedCoordinates.current,
             offsetSign,
-            widthFactor * speedFactor
+            widthFactor * normalizedSpeed
         );
         gl_Position = projectedCoordinates.previous + offset;
         v_segmentPosition = 0.0; // 头部
     } else if (pointToUse == -1) {
-        // 尾部位置，向后延伸，使用受限制的长度
-        vec4 direction = projectedCoordinates.next - projectedCoordinates.current;
+        // Get direction and normalize it to length 1.0
+        vec4 direction = normalize(projectedCoordinates.next - projectedCoordinates.current);
         vec4 extendedPosition = projectedCoordinates.current + direction * lengthFactor;
 
         offset = pixelSize * calculateOffsetOnNormalDirection(
             projectedCoordinates.current,
             extendedPosition,
             offsetSign,
-            widthFactor * speedFactor
+            widthFactor * normalizedSpeed
         );
         gl_Position = extendedPosition + offset;
         v_segmentPosition = 1.0; // 尾部
     }
 
-    speed = texture(particlesSpeed, particleIndex).ba;
     textureCoordinate = st;
 }
 `;
@@ -157,7 +158,7 @@ void main() {
 export const renderParticlesFragmentShader = /*glsl*/`#version 300 es
 precision highp float;
 
-in vec2 speed;
+in vec4 speed;
 in float v_segmentPosition;
 in vec2 textureCoordinate;
 
@@ -170,8 +171,8 @@ out vec4 fragColor;
 
 void main() {
     const float zero = 0.0;
-    if(speed.y > zero && speed.x > displayRange.x && speed.x < displayRange.y) {
-        float speedLength = clamp(speed.x, domain.x, domain.y);
+    if(speed.a > zero && speed.b > displayRange.x && speed.b < displayRange.y) {
+        float speedLength = clamp(speed.b, domain.x, domain.y);
         float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
         vec4 baseColor = texture(colorTable, vec2(normalizedSpeed, zero));
 
@@ -180,7 +181,7 @@ void main() {
         alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
 
         // 根据速度调整透明度
-        float speedAlpha = mix(0.3, 1.0, speed.y);
+        float speedAlpha = mix(0.3, 1.0, speed.a);
 
         // 组合颜色和透明度
         fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha);

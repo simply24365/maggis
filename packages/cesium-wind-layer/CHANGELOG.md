@@ -1,5 +1,18 @@
 # cesium-wind-layer
 
+## 0.9.0
+
+### Minor Changes
+
+- feat: add line length range control
+
+  - Add lineLength option to control particle trail length range
+  - Change lineLength type from number to { min: number; max: number }
+  - Set default lineLength range to { min: 20, max: 100 }
+  - Set default lineWidth to 5.0
+  - Update control panel UI to support lineLength range adjustment
+  - Add different lineLength ranges for wind and ocean data
+
 ## 0.8.0
 
 ### Minor Changes

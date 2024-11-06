@@ -93,7 +93,8 @@ const windLayer = new WindLayer(viewer, windData, {
 interface WindLayerOptions {
   particlesTextureSize: number;  // 粒子纹理大小，决定粒子最大数量（size * size）（默认：100）
   particleHeight: number;        // 粒子距地面高度（默认：0）
-  lineWidth: number;            // 粒子线宽（默认：10.0）
+  lineWidth: number;            // 粒子线宽（默认：5.0）
+  lineLength: { min: number; max: number }; // 粒子轨迹长度范围（默认：{ min: 20, max: 100 }）
   speedFactor: number;          // 速度倍数（默认：1.0）
   dropRate: number;             // 粒子消失率（默认：0.003）
   dropRateBump: number;         // 额外消失率（默认：0.01）

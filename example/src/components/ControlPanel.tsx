@@ -326,13 +326,63 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </CompactFormItem>
 
               <CompactFormItem
+                label={renderLabel(
+                  'Line Length Range',
+                  'Length range of particle trails based on speed. Lower values for slower particles, higher values for faster ones.'
+                )}
+              >
+                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      <CompactFormItem
+                        name={['lineLength', 'min']}
+                        label={
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            Min Length
+                          </Text>
+                        }
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={1}
+                          max={500}
+                          step={1}
+                          precision={1}
+                          placeholder='Min Length'
+                        />
+                      </CompactFormItem>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <CompactFormItem
+                        name={['lineLength', 'max']}
+                        label={
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            Max Length
+                          </Text>
+                        }
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={1}
+                          max={500}
+                          step={1}
+                          precision={1}
+                          placeholder='Max Length'
+                        />
+                      </CompactFormItem>
+                    </div>
+                  </div>
+                </Space>
+              </CompactFormItem>
+
+              <CompactFormItem
                 name="speedFactor"
                 label={renderLabel(
                   'Speed Factor',
                   'Factor to adjust the speed of particles. Controls the movement speed of particles.'
                 )}
               >
-                <NumberInput min={0.1} max={10} step={0.1} precision={1} />
+                <NumberInput min={0.1} max={100} step={0.1} precision={1} />
               </CompactFormItem>
 
               <CompactFormItem

@@ -201,7 +201,7 @@ export class WindParticlesComputing {
           },
           dropRate: () => this.options.dropRate,
           dropRateBump: () => this.options.dropRateBump,
-          useViewerBounds: () => this.options.useViewerBounds // 添加新的 uniform
+          useViewerBounds: () => this.options.useViewerBounds
         },
         fragmentShaderSource: ShaderManager.getPostProcessingPositionShader(),
         outputTexture: this.particlesTextures.postProcessingPosition,

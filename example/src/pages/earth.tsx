@@ -47,6 +47,8 @@ const dataConfigs = {
         max: 8,
       },
       speedFactor: 0.8,
+      lineWidth: 5.0,
+      lineLength: { min: 20, max: 100 },
     },
     file: '/wind.json'
   },
@@ -57,6 +59,8 @@ const dataConfigs = {
         max: 1,
       },
       speedFactor: 8,
+      lineWidth: 10.0,
+      lineLength: { min: 20, max: 50 },
     },
     file: '/ocean.json'
   }
@@ -67,8 +71,9 @@ const defaultOptions: Partial<WindLayerOptions> = {
   dropRate: 0.003,
   particleHeight: 1000,
   dropRateBump: 0.01,
-  lineWidth: 10.0,
-  colors: colorSchemes[3].colors,
+  lineWidth: 5.0,
+  lineLength: { min: 20, max: 100 },
+  colors: colorSchemes[3].colors.reverse(),
   flipY: true,
   useViewerBounds: true,
   dynamic: true,

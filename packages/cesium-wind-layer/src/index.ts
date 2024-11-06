@@ -38,7 +38,8 @@ export class WindLayer {
     particleHeight: 1000,
     dropRateBump: 0.01,
     speedFactor: 1.0,
-    lineWidth: 10.0,
+    lineWidth: 5.0,
+    lineLength: { min: 20, max: 100 },
     colors: ['white'],
     flipY: false,
     useViewerBounds: false,
@@ -71,12 +72,14 @@ export class WindLayer {
    * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles (size squared).
    * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
    * @param {number} [options.lineWidth=3.0] - Width of particle trails in pixels.
+   * @param {Object} [options.lineLength={ min: 20, max: 100 }] - Length range of particle trails.
    * @param {number} [options.speedFactor=1.0] - Factor to adjust the speed of particles.
    * @param {number} [options.dropRate=0.003] - Rate at which particles are dropped (reset).
    * @param {number} [options.dropRateBump=0.001] - Additional drop rate for slow-moving particles.
    * @param {string[]} [options.colors=['white']] - Array of colors for particles. Can be used to create color gradients.
    * @param {boolean} [options.flipY=false] - Whether to flip the Y-axis of the wind data.
    * @param {boolean} [options.useViewerBounds=false] - Whether to use the viewer bounds to generate particles.
+   * @param {boolean} [options.dynamic=true] - Whether to enable dynamic particle animation.
    */
   constructor(viewer: Viewer, windData: WindData, options?: Partial<WindLayerOptions>) {
     this.show = true;

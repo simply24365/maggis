@@ -93,7 +93,8 @@ Main class for wind visualization.
 interface WindLayerOptions {
   particlesTextureSize: number;  // Size of the particle texture. Determines the maximum number of particles (size squared). Default is 100.
   particleHeight: number;        // Height of particles above the ground in meters. Default is 0.
-  lineWidth: number;            // Width of particle trails in pixels. Default is 10.0.
+  lineWidth: number;            // Width of particle trails in pixels. Default is 5.0.
+  lineLength: { min: number; max: number }; // Length range of particle trails. Default is { min: 20, max: 100 }.
   speedFactor: number;          // Factor to adjust the speed of particles. Default is 1.0.
   dropRate: number;             // Rate at which particles are dropped (reset). Default is 0.003.
   dropRateBump: number;         // Additional drop rate for slow-moving particles. Default is 0.001.

@@ -208,6 +208,10 @@ export class WindParticlesRendering {
         lineWidth: () => this.options.lineWidth,
         is3D: () => this.viewerParameters.sceneMode === SceneMode.SCENE3D,
         segmentsDepthTexture: () => this.textures.segmentsDepth,
+        lineLength: () => {
+          const length = this.options.lineLength || { min: 50, max: 150 };
+          return new Cartesian2(length.min, length.max);
+        },
       },
       vertexShaderSource: ShaderManager.getSegmentDrawVertexShader(),
       fragmentShaderSource: ShaderManager.getSegmentDrawFragmentShader(),
