@@ -76,7 +76,8 @@ const windLayer = new WindLayer(viewer, windData, {
   colors: ['white'],         // 粒子颜色
   flipY: false,              // 是否翻转 Y 坐标
   domain: undefined,         // 速度渲染范围
-  displayRange: undefined    // 速度显示范围
+  displayRange: undefined,    // 速度显示范围
+  dynamic: true              // 是否启用动态粒子动画
 });
 ```
 
@@ -106,7 +107,8 @@ interface WindLayerOptions {
   displayRange?: {            // 速度显示范围（默认：undefined）
     min?: number;             // 最小速度值
     max?: number;             // 最大速度值
-  };
+    };
+  dynamic: boolean;          // 是否启用动态粒子动画（默认：true）
 }
 ```
 

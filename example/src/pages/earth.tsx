@@ -71,6 +71,7 @@ const defaultOptions: Partial<WindLayerOptions> = {
   colors: colorSchemes[3].colors,
   flipY: true,
   useViewerBounds: true,
+  dynamic: true,
   // Remove domain and speedFactor from here since they will be set dynamically
 };
 

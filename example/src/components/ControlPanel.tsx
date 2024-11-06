@@ -401,6 +401,21 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </CompactFormItem>
 
               <CompactFormItem
+                name="dynamic"
+                label={renderLabel(
+                  'Dynamic Animation',
+                  'Enable or disable particle animation. When disabled, particles will remain static.'
+                )}
+                valuePropName="checked"
+              >
+                <Switch
+                  size="small"
+                  checkedChildren="Animated"
+                  unCheckedChildren="Static"
+                />
+              </CompactFormItem>
+
+              <CompactFormItem
                 label={renderLabel(
                   'Speed Range',
                   'Controls the speed range for rendering and display.'

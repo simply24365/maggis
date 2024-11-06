@@ -18,6 +18,7 @@ import {
 } from 'cesium';
 
 interface CustomPrimitiveOptions {
+  isDynamic?: () => boolean;
   commandType: 'Draw' | 'Compute';
   geometry?: Geometry;
   attributeLocations?: { [key: string]: number };
@@ -48,6 +49,7 @@ export default class CustomPrimitive {
   show: boolean;
   commandToExecute?: DrawCommand | ComputeCommand;
   clearCommand?: ClearCommand;
+  isDynamic: () => boolean;
 
   constructor(options: CustomPrimitiveOptions) {
     this.commandType = options.commandType;
@@ -66,7 +68,8 @@ export default class CustomPrimitive {
     this.show = true;
     this.commandToExecute = undefined;
     this.clearCommand = undefined;
-
+    this.isDynamic = options.isDynamic ?? (() => true);
+    
     if (this.autoClear) {
       this.clearCommand = new ClearCommand({
         color: new Color(0.0, 0.0, 0.0, 0.0),
@@ -131,6 +134,10 @@ export default class CustomPrimitive {
   }
 
   update(frameState: any) {
+    if (!this.isDynamic()) {
+      return;
+    }
+
     if (!this.show || !defined(frameState)) {
       return;
     }

@@ -77,6 +77,7 @@ const windLayer = new WindLayer(viewer, windData, {
   flipY: false,               // Flip Y coordinates if needed
   domain: undefined,           // Optional: domain for speed
   displayRange: undefined,     // Optional: display range for speed
+  dynamic: true,              // Whether to enable dynamic particle animation
 });
 ```
 
@@ -107,6 +108,7 @@ interface WindLayerOptions {
     min?: number;             // Minimum speed value for display
     max?: number;             // Maximum speed value for display
   };
+  dynamic: boolean;          // Whether to enable dynamic particle animation. Default is true.
 }
 ```
 

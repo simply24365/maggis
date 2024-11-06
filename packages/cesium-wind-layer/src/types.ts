@@ -60,6 +60,11 @@ export interface WindLayerOptions {
     min?: number;
     max?: number;
   };
+  /**
+   * Whether to enable dynamic particle animation. Default is true.
+   * When set to false, particles will remain static.
+   */
+  dynamic: boolean;
 }
 
 export interface WindDataDemention {

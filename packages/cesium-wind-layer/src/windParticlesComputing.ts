@@ -167,7 +167,8 @@ export class WindParticlesComputing {
           if (this.primitives.calculateSpeed.commandToExecute) {
             this.primitives.calculateSpeed.commandToExecute.outputTexture = this.particlesTextures.particlesSpeed;
           }
-        }
+        },
+        isDynamic: () =>this.options.dynamic
       }),
 
       updatePosition: new CustomPrimitive({
@@ -182,7 +183,8 @@ export class WindParticlesComputing {
           if (this.primitives.updatePosition.commandToExecute) {
             this.primitives.updatePosition.commandToExecute.outputTexture = this.particlesTextures.nextParticlesPosition;
           }
-        }
+        },
+        isDynamic: () => this.options.dynamic
       }),
 
       postProcessingPosition: new CustomPrimitive({
@@ -207,7 +209,8 @@ export class WindParticlesComputing {
           if (this.primitives.postProcessingPosition.commandToExecute) {
             this.primitives.postProcessingPosition.commandToExecute.outputTexture = this.particlesTextures.postProcessingPosition;
           }
-        }
+        },
+        isDynamic: () => this.options.dynamic
       })
     };
   }

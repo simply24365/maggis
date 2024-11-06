@@ -43,7 +43,8 @@ export class WindLayer {
     flipY: false,
     useViewerBounds: false,
     domain: undefined,
-    displayRange: undefined
+    displayRange: undefined,
+    dynamic: true
   }
 
   viewer: Viewer;
