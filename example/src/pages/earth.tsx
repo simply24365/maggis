@@ -47,8 +47,9 @@ const dataConfigs = {
         max: 8,
       },
       speedFactor: 0.8,
-      lineWidth: 5.0,
-      lineLength: { min: 20, max: 100 },
+      lineWidth: { min: 1, max: 2 },
+      lineLength: { min: 50, max: 100 },
+      particleHeight: 100,
     },
     file: '/wind.json'
   },
@@ -59,25 +60,21 @@ const dataConfigs = {
         max: 1,
       },
       speedFactor: 8,
-      lineWidth: 10.0,
+      lineWidth: { min: 1, max: 4 },
       lineLength: { min: 20, max: 50 },
+      particleHeight: 10,
     },
     file: '/ocean.json'
   }
 };
 
 const defaultOptions: Partial<WindLayerOptions> = {
+  ...WindLayer.defaultOptions,
   particlesTextureSize: 200,
-  dropRate: 0.003,
-  particleHeight: 1000,
-  dropRateBump: 0.01,
-  lineWidth: 5.0,
-  lineLength: { min: 20, max: 100 },
-  colors: colorSchemes[3].colors.reverse(),
+  colors: colorSchemes.find(item => item.value === 'cool')?.colors.reverse(),
   flipY: true,
   useViewerBounds: true,
   dynamic: true,
-  // Remove domain and speedFactor from here since they will be set dynamically
 };
 
 export function Earth() {
@@ -124,7 +121,7 @@ export function Earth() {
 
     viewerRef.current.scene.globe.depthTestAgainstTerrain = true;
     // Optional: Add exaggeration to make terrain features more visible
-    viewerRef.current.scene.verticalExaggeration = 2;
+    // viewerRef.current.scene.verticalExaggeration = 2;
     // viewerRef.current.sceneModePicker.viewModel.duration = 0;
     
     const initWindLayer = async () => {

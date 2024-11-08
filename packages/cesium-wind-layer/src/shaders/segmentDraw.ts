@@ -13,7 +13,7 @@ uniform float frameRateAdjustment;
 uniform float particleHeight;
 uniform float aspect;
 uniform float pixelSize;
-uniform float lineWidth;
+uniform vec2 lineWidth;
 uniform vec2 lineLength;
 uniform vec2 domain;
 uniform bool is3D;
@@ -81,7 +81,7 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
     normalVector.x = normalVector.x / aspect;
 
     // 使用 widthFactor 调整宽度
-    float offsetLength = lineWidth * widthFactor;
+    float offsetLength = widthFactor * lineWidth.y;
     normalVector = offsetLength * normalVector;
 
     vec4 offset = vec4(offsetSign * normalVector, 0.0, 0.0);
@@ -119,11 +119,14 @@ void main() {
     vec4 offset = vec4(0.0);
 
     // 计算速度相关的宽度和长度因子
-    float widthFactor = pointToUse < 0 ? 1.0 : 0.5; // 头部更宽，尾部更窄
-
-    // Calculate length based on speed
     float speedLength = clamp(speed.b, domain.x, domain.y);
     float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
+    
+    // 根据速度计算宽度
+    float widthFactor = mix(lineWidth.x, lineWidth.y, normalizedSpeed);
+    widthFactor *= (pointToUse < 0 ? 1.0 : 0.5); // 头部更宽，尾部更窄
+
+    // Calculate length based on speed
     float lengthFactor = mix(lineLength.x, lineLength.y, normalizedSpeed) * pixelSize;
 
     if (pointToUse == 1) {
@@ -132,7 +135,7 @@ void main() {
             projectedCoordinates.previous,
             projectedCoordinates.current,
             offsetSign,
-            widthFactor * normalizedSpeed
+            widthFactor
         );
         gl_Position = projectedCoordinates.previous + offset;
         v_segmentPosition = 0.0; // 头部
@@ -145,7 +148,7 @@ void main() {
             projectedCoordinates.current,
             extendedPosition,
             offsetSign,
-            widthFactor * normalizedSpeed
+            widthFactor
         );
         gl_Position = extendedPosition + offset;
         v_segmentPosition = 1.0; // 尾部

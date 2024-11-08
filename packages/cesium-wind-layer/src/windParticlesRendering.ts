@@ -4,6 +4,7 @@ import { WindParticlesComputing } from './windParticlesComputing';
 import CustomPrimitive from './customPrimitive';
 import { ShaderManager } from './shaderManager';
 import { deepMerge } from './utils';
+import { DefaultOptions } from '.';
 
 export class WindParticlesRendering {
   private context: any;
@@ -205,13 +206,16 @@ export class WindParticlesRendering {
         particleHeight: () => this.options.particleHeight || 0,
         aspect: () => this.context.drawingBufferWidth / this.context.drawingBufferHeight,
         pixelSize: () => this.viewerParameters.pixelSize,
-        lineWidth: () => this.options.lineWidth,
-        is3D: () => this.viewerParameters.sceneMode === SceneMode.SCENE3D,
-        segmentsDepthTexture: () => this.textures.segmentsDepth,
+        lineWidth: () => {
+          const width = this.options.lineWidth || DefaultOptions.lineWidth;
+          return new Cartesian2(width.min, width.max);
+        },
         lineLength: () => {
-          const length = this.options.lineLength || { min: 50, max: 150 };
+          const length = this.options.lineLength || DefaultOptions.lineLength;
           return new Cartesian2(length.min, length.max);
         },
+        is3D: () => this.viewerParameters.sceneMode === SceneMode.SCENE3D,
+        segmentsDepthTexture: () => this.textures.segmentsDepth,
       },
       vertexShaderSource: ShaderManager.getSegmentDrawVertexShader(),
       fragmentShaderSource: ShaderManager.getSegmentDrawFragmentShader(),

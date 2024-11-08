@@ -67,17 +67,18 @@ const windData = {
 
 // 使用配置创建风场图层
 const windLayer = new WindLayer(viewer, windData, {
-  particlesTextureSize: 100, // 粒子系统的纹理大小
-  particleHeight: 1000,      // 粒子距地面高度
-  lineWidth: 10.0,           // 粒子轨迹宽度
-  speedFactor: 1.0,          // 速度倍数
-  dropRate: 0.003,           // 粒子消失率
-  dropRateBump: 0.001,       // 慢速粒子的额外消失率
-  colors: ['white'],         // 粒子颜色
-  flipY: false,              // 是否翻转 Y 坐标
-  domain: undefined,         // 速度渲染范围
-  displayRange: undefined,    // 速度显示范围
-  dynamic: true              // 是否启用动态粒子动画
+  particlesTextureSize: 100,          // 粒子系统的纹理大小
+  particleHeight: 1000,               // 粒子距地面高度
+  lineWidth: { min: 1, max: 2 },      // 粒子轨迹宽度范围
+  lineLength: { min: 20, max: 100 },  // 粒子轨迹长度范围
+  speedFactor: 1.0,                   // 速度倍数
+  dropRate: 0.003,                    // 粒子消失率
+  dropRateBump: 0.001,                // 慢速粒子的额外消失率
+  colors: ['white'],                  // 粒子颜色
+  flipY: false,                       // 是否翻转 Y 坐标
+  domain: undefined,                  // 速度渲染范围
+  displayRange: undefined,            // 速度显示范围
+  dynamic: true                       // 是否启用动态粒子动画
 });
 ```
 
@@ -91,25 +92,25 @@ const windLayer = new WindLayer(viewer, windData, {
 
 ```typescript
 interface WindLayerOptions {
-  particlesTextureSize: number;  // 粒子纹理大小，决定粒子最大数量（size * size）（默认：100）
-  particleHeight: number;        // 粒子距地面高度（默认：0）
-  lineWidth: number;            // 粒子线宽（默认：5.0）
-  lineLength: { min: number; max: number }; // 粒子轨迹长度范围（默认：{ min: 20, max: 100 }）
-  speedFactor: number;          // 速度倍数（默认：1.0）
-  dropRate: number;             // 粒子消失率（默认：0.003）
-  dropRateBump: number;         // 额外消失率（默认：0.01）
-  colors: string[];            // 粒子颜色数组（默认：['white']）
-  flipY: boolean;              // 是否翻转 Y 坐标（默认：false）
-  useViewerBounds: boolean;    // 是否使用视域范围生成粒子（默认：false）
-  domain?: {                   // 速度渲染范围（默认：undefined）
-    min?: number;             // 最小速度值
-    max?: number;             // 最大速度值
+  particlesTextureSize: number;              // 粒子纹理大小，决定粒子最大数量（size * size）（默认：100）
+  particleHeight: number;                    // 粒子距地面高度（默认：0）
+  lineWidth: { min: number; max: number };   // 粒子轨迹宽度范围（默认：{ min: 1, max: 5 }）
+  lineLength: { min: number; max: number };  // 粒子轨迹长度范围（默认：{ min: 20, max: 100 }）
+  speedFactor: number;                       // 速度倍数（默认：1.0）
+  dropRate: number;                          // 粒子消失率（默认：0.003）
+  dropRateBump: number;                      // 额外消失率（默认：0.01）
+  colors: string[];                          // 粒子颜色数组（默认：['white']）
+  flipY: boolean;                            // 是否翻转 Y 坐标（默认：false）
+  useViewerBounds: boolean;                  // 是否使用视域范围生成粒子（默认：false）
+  domain?: {                                 // 速度渲染范围（默认：undefined）
+    min?: number;                            // 最小速度值
+    max?: number;                            // 最大速度值
   };
-  displayRange?: {            // 速度显示范围（默认：undefined）
-    min?: number;             // 最小速度值
-    max?: number;             // 最大速度值
-    };
-  dynamic: boolean;          // 是否启用动态粒子动画（默认：true）
+  displayRange?: {                           // 速度显示范围（默认：undefined）
+    min?: number;                            // 最小速度值
+    max?: number;                            // 最大速度值
+  };
+  dynamic: boolean;                          // 是否启用动态粒子动画（默认：true）
 }
 ```
 

@@ -16,6 +16,22 @@ export * from './types';
 type WindLayerEventType = 'dataChange' | 'optionsChange';
 type WindLayerEventCallback = (data: WindData | WindLayerOptions) => void;
 
+export const DefaultOptions: WindLayerOptions = {
+  particlesTextureSize: 100,
+  dropRate: 0.003,
+  particleHeight: 1000,
+  dropRateBump: 0.01,
+  speedFactor: 1.0,
+  lineWidth: { min: 1, max: 2 },
+  lineLength: { min: 20, max: 100 },
+  colors: ['white'],
+  flipY: false,
+  useViewerBounds: false,
+  domain: undefined,
+  displayRange: undefined,
+  dynamic: true
+}
+
 export class WindLayer {
   private _show: boolean = true;
   private _resized: boolean = false;
@@ -32,21 +48,7 @@ export class WindLayer {
     }
   }
 
-  static defaultOptions: WindLayerOptions = {
-    particlesTextureSize: 100,
-    dropRate: 0.003,
-    particleHeight: 1000,
-    dropRateBump: 0.01,
-    speedFactor: 1.0,
-    lineWidth: 5.0,
-    lineLength: { min: 20, max: 100 },
-    colors: ['white'],
-    flipY: false,
-    useViewerBounds: false,
-    domain: undefined,
-    displayRange: undefined,
-    dynamic: true
-  }
+  static defaultOptions: WindLayerOptions = DefaultOptions;
 
   viewer: Viewer;
   scene: Scene;
@@ -71,7 +73,7 @@ export class WindLayer {
    * @param {Partial<WindLayerOptions>} [options] - Optional configuration options for the wind layer.
    * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles (size squared).
    * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
-   * @param {number} [options.lineWidth=3.0] - Width of particle trails in pixels.
+   * @param {Object} [options.lineWidth={ min: 1, max: 2 }] - Width range of particle trails.
    * @param {Object} [options.lineLength={ min: 20, max: 100 }] - Length range of particle trails.
    * @param {number} [options.speedFactor=1.0] - Factor to adjust the speed of particles.
    * @param {number} [options.dropRate=0.003] - Rate at which particles are dropped (reset).

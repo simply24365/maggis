@@ -15,6 +15,23 @@ import {
   interpolateOranges,
   interpolateReds,
   interpolatePurples,
+  interpolateBuGn,
+  interpolateBuPu,
+  interpolateCividis,
+  interpolateCubehelixDefault,
+  interpolateGnBu,
+  interpolateGreys,
+  interpolateOrRd,
+  interpolatePuBu,
+  interpolatePuBuGn,
+  interpolatePuRd,
+  interpolateRdPu,
+  interpolateSinebow,
+  interpolateTurbo,
+  interpolateYlGn,
+  interpolateYlGnBu,
+  interpolateYlOrBr,
+  interpolateYlOrRd,
 } from 'd3-scale-chromatic';
 import styled from 'styled-components';
 
@@ -114,23 +131,40 @@ const generateSingleColorTable = (color: string): string[] => {
 
 export const colorSchemes = [
   { label: 'Single Color', value: 'single', interpolator: () => '#FFFFFF', isSingleColor: true },
-  { label: 'Rainbow', value: 'rainbow', interpolator: interpolateRainbow, reverse: true },
+  { label: 'Rainbow', value: 'rainbow', interpolator: interpolateRainbow },
+  { label: 'Turbo', value: 'turbo', interpolator: interpolateTurbo },
   { label: 'Viridis', value: 'viridis', interpolator: interpolateViridis },
   { label: 'Cool', value: 'cool', interpolator: interpolateCool },
   { label: 'Warm', value: 'warm', interpolator: interpolateWarm },
   { label: 'Inferno', value: 'inferno', interpolator: interpolateInferno },
   { label: 'Magma', value: 'magma', interpolator: interpolateMagma },
   { label: 'Plasma', value: 'plasma', interpolator: interpolatePlasma },
+  { label: 'Cividis', value: 'cividis', interpolator: interpolateCividis },
+  { label: 'Cubehelix', value: 'cubehelix', interpolator: interpolateCubehelixDefault },
+  { label: 'Sinebow', value: 'sinebow', interpolator: interpolateSinebow },
   { label: 'Blues', value: 'blues', interpolator: interpolateBlues },
   { label: 'Greens', value: 'greens', interpolator: interpolateGreens },
+  { label: 'Greys', value: 'greys', interpolator: interpolateGreys },
   { label: 'Oranges', value: 'oranges', interpolator: interpolateOranges },
-  { label: 'Reds', value: 'reds', interpolator: interpolateReds },
   { label: 'Purples', value: 'purples', interpolator: interpolatePurples },
+  { label: 'Reds', value: 'reds', interpolator: interpolateReds },
+  { label: 'BuGn', value: 'bugn', interpolator: interpolateBuGn },
+  { label: 'BuPu', value: 'bupu', interpolator: interpolateBuPu },
+  { label: 'GnBu', value: 'gnbu', interpolator: interpolateGnBu },
+  { label: 'OrRd', value: 'orrd', interpolator: interpolateOrRd },
+  { label: 'PuBuGn', value: 'pubugn', interpolator: interpolatePuBuGn },
+  { label: 'PuBu', value: 'pubu', interpolator: interpolatePuBu },
+  { label: 'PuRd', value: 'purd', interpolator: interpolatePuRd },
+  { label: 'RdPu', value: 'rdpu', interpolator: interpolateRdPu },
+  { label: 'YlGnBu', value: 'ylgnbu', interpolator: interpolateYlGnBu },
+  { label: 'YlGn', value: 'ylgn', interpolator: interpolateYlGn },
+  { label: 'YlOrBr', value: 'ylorbr', interpolator: interpolateYlOrBr },
+  { label: 'YlOrRd', value: 'ylorrd', interpolator: interpolateYlOrRd }
 ].map((item) => ({
   ...item,
   colors: item.isSingleColor 
     ? generateSingleColorTable(item.interpolator())
-    : generateColorTable(item.interpolator, item.reverse),
+    : generateColorTable(item.interpolator),
 }));
 
 const ColorTableInput: React.FC<ColorTableInputProps> = ({

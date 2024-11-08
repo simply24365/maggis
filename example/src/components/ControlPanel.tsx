@@ -316,13 +316,53 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </CompactFormItem>
 
               <CompactFormItem
-                name="lineWidth"
                 label={renderLabel(
-                  'Line Width',
-                  'Width of particle trails in pixels. Controls the width of the particles.'
+                  'Line Width Range',
+                  'Width range of particle trails in pixels. Lower values for thinner lines, higher values for thicker ones.'
                 )}
               >
-                <NumberInput min={0.1} max={100} step={0.1} precision={1} />
+                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      <CompactFormItem
+                        name={['lineWidth', 'min']}
+                        label={
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            Min Width
+                          </Text>
+                        }
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={0.1}
+                          max={10}
+                          step={0.1}
+                          precision={1}
+                          placeholder='Min Width'
+                        />
+                      </CompactFormItem>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <CompactFormItem
+                        name={['lineWidth', 'max']}
+                        label={
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            Max Width
+                          </Text>
+                        }
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          min={0.1}
+                          max={10}
+                          step={0.1}
+                          precision={1}
+                          placeholder='Max Width'
+                        />
+                      </CompactFormItem>
+                    </div>
+                  </div>
+                </Space>
               </CompactFormItem>
 
               <CompactFormItem

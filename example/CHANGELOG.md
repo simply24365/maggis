@@ -1,5 +1,28 @@
 # example
 
+## 0.7.0
+
+### Minor Changes
+
+- feat(wind-layer): refactor lineWidth to support min-max range
+
+  BREAKING CHANGE: lineWidth option now requires min-max range object instead of single number
+
+  - Change lineWidth type from number to { min: number, max: number }
+  - Set default lineWidth range to { min: 1, max: 2 }
+  - Update shader to support dynamic line width based on particle speed
+  - Update types and documentation
+  - Update example to demonstrate new lineWidth configuration
+  - Add lineWidth range control in ControlPanel component
+
+  This change allows for more dynamic and visually appealing particle trails by varying
+  the line width based on wind speed, similar to how line length works.
+
+### Patch Changes
+
+- Updated dependencies
+  - cesium-wind-layer@0.10.0
+
 ## 0.6.0
 
 ### Minor Changes
