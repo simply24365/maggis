@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Viewer, Rectangle, ArcGisMapServerImageryProvider, ImageryLayer, Ion, CesiumTerrainProvider } from 'cesium';
 import { WindLayer, WindLayerOptions, WindData } from 'cesium-wind-layer';
-import { ControlPanel } from '@/components/ControlPanel';
 import styled from 'styled-components';
-import { colorSchemes } from '@/components/ColorTableInput';
-import { SpeedQuery } from '@/components/SpeedQuery';
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhY2IzNzQzNi1iOTVkLTRkZjItOWVkZi1iMGUyYTUxN2Q5YzYiLCJpZCI6NTUwODUsImlhdCI6MTcyNTQyMDE4NX0.yHbHpszFexPrxX6_55y0RgNrHjBQNu9eYkW9cXKUTPk';
 
@@ -20,22 +17,6 @@ const CesiumContainer = styled.div`
   flex: 1;
   position: relative;
   overflow: hidden;
-`;
-
-const SwitchButton = styled.button`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 8px 16px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  z-index: 1000;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
 `;
 
 // Add data configurations
@@ -71,7 +52,7 @@ const dataConfigs = {
 const defaultOptions: Partial<WindLayerOptions> = {
   ...WindLayer.defaultOptions,
   particlesTextureSize: 200,
-  colors: colorSchemes.find(item => item.value === 'cool')?.colors.reverse(),
+  colors: ['#3288bd', '#66c2a5', '#abdda4', '#e6f598', '#ffffbf', '#fee08b', '#fdae61', '#f46d43', '#d53e4f', '#9e0142'],
   flipY: true,
   useViewerBounds: true,
   dynamic: true,
@@ -81,13 +62,7 @@ export function Earth() {
   const viewerRef = useRef<Viewer | null>(null);
   const windLayerRef = useRef<WindLayer | null>(null);
   const [, setIsWindLayerReady] = useState(false);
-  const windDataFiles = [dataConfigs.wind.file, dataConfigs.ocean.file];
   const isFirstLoadRef = useRef(true);
-  const [currentDataIndex, setCurrentDataIndex] = useState(0);
-  const [currentOptions, setCurrentOptions] = useState<WindLayerOptions>({
-    ...defaultOptions,
-    ...dataConfigs.wind.options
-  } as WindLayerOptions);
 
   useEffect(() => {
     let isComponentMounted = true;
@@ -126,7 +101,7 @@ export function Earth() {
     
     const initWindLayer = async () => {
       try {
-        const res = await fetch(windDataFiles[0]);
+        const res = await fetch('/wind.json');
         const data = await res.json();
 
         if (!isComponentMounted || !viewerRef.current) return;
@@ -146,7 +121,6 @@ export function Earth() {
           ...defaultOptions,
           ...dataConfigs.wind.options
         };
-        setCurrentOptions(initialOptions as WindLayerOptions);
 
         if (isFirstLoadRef.current && windData.bounds) {
           const rectangle = Rectangle.fromDegrees(
@@ -202,61 +176,9 @@ export function Earth() {
     };
   }, []);
 
-  const handleOptionsChange = (changedOptions: Partial<WindLayerOptions>) => {
-    setCurrentOptions({
-      ...currentOptions,
-      ...changedOptions
-    });
-  };
-
-  const handleSwitchData = async () => {
-    try {
-      const nextIndex = (currentDataIndex + 1) % windDataFiles.length;
-      const res = await fetch(windDataFiles[nextIndex]);
-      const data = await res.json();
-
-      if (!windLayerRef.current) return;
-
-      const windData: WindData = {
-        ...data,
-        bounds: {
-          west: data.bbox[0],
-          south: data.bbox[1],
-          east: data.bbox[2],
-          north: data.bbox[3],
-        }
-      };
-
-      // Get the correct configuration based on the next index
-      const configKey = nextIndex === 0 ? 'wind' : 'ocean';
-      const newOptions = {
-        ...currentOptions, // Keep current options
-        ...dataConfigs[configKey].options // Only override specific options
-      };
-
-      // Update both the wind data and options
-      windLayerRef.current.updateOptions(newOptions);
-      windLayerRef.current.updateWindData(windData);
-      setCurrentOptions(newOptions);
-      setCurrentDataIndex(nextIndex);
-    } catch (error) {
-      console.error('Failed to switch wind data:', error);
-    }
-  };
-
   return (
     <PageContainer>
-      <SpeedQuery windLayer={windLayerRef.current} viewer={viewerRef.current} />
-      <CesiumContainer id="cesiumContainer">
-        <SwitchButton onClick={handleSwitchData}>
-          Switch to {currentDataIndex === 0 ? 'Ocean' : 'Wind'} Data
-        </SwitchButton>
-        <ControlPanel
-          windLayer={windLayerRef.current}
-          initialOptions={currentOptions}
-          onOptionsChange={handleOptionsChange}
-        />
-      </CesiumContainer>
+      <CesiumContainer id="cesiumContainer" />
     </PageContainer>
   );
 }
