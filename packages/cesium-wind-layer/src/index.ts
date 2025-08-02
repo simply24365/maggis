@@ -134,6 +134,26 @@ export class WindLayer {
       windData = { ...windData, speed };
     }
 
+    // If mask data is not provided, create a default mask with all areas valid (value = 1)
+    if (!windData.mask) {
+      const mask = {
+        array: new Float32Array(windData.u.array.length).fill(1.0),
+        min: 1.0,
+        max: 1.0
+      };
+      windData = { ...windData, mask };
+    } else if (windData.mask.min === undefined || windData.mask.max === undefined) {
+      // Calculate min/max for provided mask data
+      let min = Number.MAX_VALUE;
+      let max = Number.MIN_VALUE;
+      for (let i = 0; i < windData.mask.array.length; i++) {
+        min = Math.min(min, windData.mask.array[i]);
+        max = Math.max(max, windData.mask.array[i]);
+      }
+      windData.mask.min = min;
+      windData.mask.max = max;
+    }
+
     return windData as Required<WindData>;
   }
 

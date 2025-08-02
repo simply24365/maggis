@@ -11,6 +11,7 @@ export class WindParticlesComputing {
   windTextures!: {
     U: Texture;
     V: Texture;
+    mask: Texture;
   };
   particlesTextures!: {
     previousParticlesPosition: Texture;
@@ -23,6 +24,7 @@ export class WindParticlesComputing {
     calculateSpeed: CustomPrimitive;
     updatePosition: CustomPrimitive;
     postProcessingPosition: CustomPrimitive;
+    maskCheck: CustomPrimitive;
   };
   windData: Required<WindData>;
   private frameRateMonitor: FrameRateMonitor;
@@ -105,6 +107,12 @@ export class WindParticlesComputing {
           arrayBufferView: new Float32Array(this.windData.v.array)
         }
       }),
+      mask: new Texture({
+        ...options,
+        source: {
+          arrayBufferView: new Float32Array(this.windData.mask.array)
+        }
+      }),
     };
   }
 
@@ -162,8 +170,8 @@ export class WindParticlesComputing {
         preExecute: () => {
           const temp = this.particlesTextures.previousParticlesPosition;
           this.particlesTextures.previousParticlesPosition = this.particlesTextures.currentParticlesPosition;
-          this.particlesTextures.currentParticlesPosition = this.particlesTextures.postProcessingPosition;
-          this.particlesTextures.postProcessingPosition = temp;
+          this.particlesTextures.currentParticlesPosition = this.particlesTextures.nextParticlesPosition;
+          this.particlesTextures.nextParticlesPosition = temp;
           if (this.primitives.calculateSpeed.commandToExecute) {
             this.primitives.calculateSpeed.commandToExecute.outputTexture = this.particlesTextures.particlesSpeed;
           }
@@ -211,6 +219,30 @@ export class WindParticlesComputing {
           }
         },
         isDynamic: () => this.options.dynamic
+      }),
+
+      maskCheck: new CustomPrimitive({
+        commandType: 'Compute',
+        uniformMap: {
+          currentParticlesPosition: () => this.particlesTextures.postProcessingPosition,
+          mask: () => this.windTextures.mask,
+          dataLonRange: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.east),
+          dataLatRange: () => new Cartesian2(this.windData.bounds.south, this.windData.bounds.north),
+          dimension: () => new Cartesian2(this.windData.width, this.windData.height),
+          minimum: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.south),
+          maximum: () => new Cartesian2(this.windData.bounds.east, this.windData.bounds.north),
+          randomCoefficient: function () {
+            return Math.random();
+          }
+        },
+        fragmentShaderSource: ShaderManager.getMaskCheckShader(),
+        outputTexture: this.particlesTextures.nextParticlesPosition,
+        preExecute: () => {
+          if (this.primitives.maskCheck.commandToExecute) {
+            this.primitives.maskCheck.commandToExecute.outputTexture = this.particlesTextures.nextParticlesPosition;
+          }
+        },
+        isDynamic: () => this.options.dynamic
       })
     };
   }
@@ -218,6 +250,7 @@ export class WindParticlesComputing {
   private reCreateWindTextures() {
     this.windTextures.U.destroy();
     this.windTextures.V.destroy();
+    this.windTextures.mask.destroy();
     this.createWindTextures();
   }
 
@@ -262,9 +295,13 @@ export class WindParticlesComputing {
   }
 
   destroy() {
-    Object.values(this.windTextures).forEach(texture => texture.destroy());
+    Object.values(this.windTextures).forEach(texture => {
+      if (texture) texture.destroy();
+    });
     Object.values(this.particlesTextures).forEach(texture => texture.destroy());
-    Object.values(this.primitives).forEach(primitive => primitive.destroy());
+    Object.values(this.primitives).forEach(primitive => {
+      if (primitive) primitive.destroy();
+    });
     this.frameRateMonitor.destroy();
   }
 }

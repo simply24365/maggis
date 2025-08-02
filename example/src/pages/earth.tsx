@@ -106,6 +106,38 @@ export function Earth() {
 
         if (!isComponentMounted || !viewerRef.current) return;
 
+        // Create test mask: circle inside square (normalized coordinates)
+        const createTestMask = (width: number, height: number) => {
+          const mask = new Float32Array(width * height);
+          
+          // Circle parameters (in normalized coordinates 0-1)
+          const centerX = 0.5;  // Center at 0.5
+          const centerY = 0.5;  // Center at 0.5
+          const radius = 0.5;   // Radius 0.5
+          
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const index = y * width + x;
+              
+              // Convert pixel coordinates to normalized coordinates (0-1)
+              const normalizedX = x / (width - 1);
+              const normalizedY = y / (height - 1);
+              
+              // Calculate distance from center
+              const dx = normalizedX - centerX;
+              const dy = normalizedY - centerY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              
+              // Set mask: 1 if inside circle, 0 otherwise
+              mask[index] = distance <= radius ? 1.0 : 0.0;
+            }
+          }
+          
+          return mask;
+        };
+
+        const testMask = createTestMask(data.width, data.height);
+
         const windData: WindData = {
           ...data,
           bounds: {
@@ -113,6 +145,11 @@ export function Earth() {
             south: data.bbox[1],
             east: data.bbox[2],
             north: data.bbox[3],
+          },
+          mask: {
+            array: testMask,
+            min: 0.0,
+            max: 1.0
           }
         };
 

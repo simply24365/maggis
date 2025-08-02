@@ -25,7 +25,8 @@ export class WindParticleSystem {
       this.computing.primitives.calculateSpeed,
       this.computing.primitives.updatePosition,
       this.computing.primitives.postProcessingPosition,
-      this.rendering.primitives.segments,
+      this.computing.primitives.maskCheck,
+      this.rendering.primitives.segments
     ];
 
     return primitives;

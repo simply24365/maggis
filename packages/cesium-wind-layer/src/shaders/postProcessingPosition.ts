@@ -32,20 +32,17 @@ float rand(vec2 seed, vec2 range) {
 }
 
 vec2 generateRandomParticle(vec2 seed) {
-    vec2 range;
-    float randomLon, randomLat;
-    
     if (useViewerBounds) {
         // 在当前视域范围内生成粒子
-        randomLon = rand(seed, lonRange);
-        randomLat = rand(-seed, latRange);
+        float randomLon = rand(seed, lonRange);
+        float randomLat = rand(-seed, latRange);
+        return vec2(randomLon, randomLat);
     } else {
         // 在数据范围内生成粒子
-        randomLon = rand(seed, dataLonRange);
-        randomLat = rand(-seed, dataLatRange);
+        float randomLon = rand(seed, dataLonRange);
+        float randomLat = rand(-seed, dataLatRange);
+        return vec2(randomLon, randomLat);
     }
-
-    return vec2(randomLon, randomLat);
 }
 
 bool particleOutbound(vec2 particle) {

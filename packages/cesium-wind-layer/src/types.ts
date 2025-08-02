@@ -91,6 +91,11 @@ export interface WindData {
   u: WindDataDemention;
   v: WindDataDemention;
   speed?: WindDataDemention;
+  /**
+   * Optional mask texture data. Values should be 0 (blocked) or 1 (allowed).
+   * If not provided, all areas are assumed to be valid for particle generation.
+   */
+  mask?: WindDataDemention;
   width: number;
   height: number;
   bounds: {
