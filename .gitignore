@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.log
 .turbo
+
+packages/cesium-wind-layer/output
+packages/cesium-wind-layer/data
