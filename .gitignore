@@ -1,8 +1,9 @@
 node_modules
 dist
 .DS_Store
-*.log
+*.log   
 .turbo
 
 packages/cesium-wind-layer/output
 packages/cesium-wind-layer/data
+example/public/river-data/velocity

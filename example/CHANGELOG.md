@@ -16,7 +16,7 @@
   - Add lineWidth range control in ControlPanel component
 
   This change allows for more dynamic and visually appealing particle trails by varying
-  the line width based on wind speed, similar to how line length works.
+  the line width based on flow speed, similar to how line length works.
 
 ### Patch Changes
 
@@ -34,7 +34,7 @@
   - Set default lineLength range to { min: 20, max: 100 }
   - Set default lineWidth to 5.0
   - Update control panel UI to support lineLength range adjustment
-  - Add different lineLength ranges for wind and ocean data
+  - Add different lineLength ranges for flow and ocean data
 
 ### Patch Changes
 
@@ -47,7 +47,7 @@
 
 - 770381e: feat: add dynamic option to control particle animation
 
-  - Add new `dynamic` option to WindLayerOptions to control particle animation state
+  - Add new `dynamic` option to FlowLayerOptions to control particle animation state
   - Add dynamic switch control in ControlPanel component
   - Set default value of dynamic option to true
   - Update types and documentation
@@ -114,13 +114,13 @@
 
 ### Minor Changes
 
-- feat: add event system for wind layer
+- feat: add event system for flow layer
 
   - Add event system for data and options changes
-  - Add WindLayerEventType and WindLayerEventCallback types
+  - Add FlowLayerEventType and FlowLayerEventCallback types
   - Implement addEventListener and removeEventListener methods
   - Add event dispatching for data and options updates
-  - Improve texture recreation when updating wind data
+  - Improve texture recreation when updating flow data
 
 ### Patch Changes
 

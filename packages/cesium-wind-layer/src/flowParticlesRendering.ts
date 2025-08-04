@@ -1,22 +1,22 @@
 import { Geometry, GeometryAttribute, ComponentDatatype, PrimitiveType, GeometryAttributes, Color, Texture, Sampler, TextureMinificationFilter, TextureMagnificationFilter, PixelFormat, PixelDatatype, Framebuffer, Appearance, SceneMode, TextureWrap, VertexArray, BufferUsage, Cartesian2 } from 'cesium';
-import { WindLayerOptions } from './types';
-import { WindParticlesComputing } from './windParticlesComputing';
+import { FlowLayerOptions } from './types';
+import { FlowParticlesComputing } from './flowParticlesComputing';
 import CustomPrimitive from './customPrimitive';
 import { ShaderManager } from './shaderManager';
 import { deepMerge } from './utils';
 import { DefaultOptions } from '.';
 
-export class WindParticlesRendering {
+export class FlowParticlesRendering {
   private context: any;
-  private options: WindLayerOptions;
+  private options: FlowLayerOptions;
   viewerParameters: any;
-  private computing: WindParticlesComputing;
+  private computing: FlowParticlesComputing;
   public primitives!: ReturnType<typeof this.createPrimitives>;
   private colorTable: Texture;
   textures: ReturnType<typeof this.createRenderingTextures>;
   framebuffers: ReturnType<typeof this.createRenderingFramebuffers>;
 
-  constructor(context: any, options: WindLayerOptions, viewerParameters: any, computing: WindParticlesComputing) {
+  constructor(context: any, options: FlowLayerOptions, viewerParameters: any, computing: FlowParticlesComputing) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
@@ -193,13 +193,13 @@ export class WindParticlesRendering {
         frameRateAdjustment: () => this.computing.frameRateAdjustment,
         colorTable: () => this.colorTable,
         domain: () => {
-          const domain = new Cartesian2(this.options.domain?.min ?? this.computing.windData.speed.min, this.options.domain?.max ?? this.computing.windData.speed.max);
+          const domain = new Cartesian2(this.options.domain?.min ?? this.computing.flowData.speed.min, this.options.domain?.max ?? this.computing.flowData.speed.max);
           return domain;
         },
         displayRange: () => {
           const displayRange = new Cartesian2(
-            this.options.displayRange?.min ?? this.computing.windData.speed.min,
-            this.options.displayRange?.max ?? this.computing.windData.speed.max
+            this.options.displayRange?.min ?? this.computing.flowData.speed.min,
+            this.options.displayRange?.max ?? this.computing.flowData.speed.max
           );
           return displayRange;
         },
@@ -256,7 +256,7 @@ export class WindParticlesRendering {
     this.colorTable = this.createColorTableTexture();
   }
 
-  updateOptions(options: Partial<WindLayerOptions>) {
+  updateOptions(options: Partial<FlowLayerOptions>) {
     const needUpdateColorTable = options.colors &&
       JSON.stringify(options.colors) !== JSON.stringify(this.options.colors);
 

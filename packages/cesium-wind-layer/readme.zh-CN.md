@@ -1,4 +1,4 @@
-# Cesium Wind Layer
+# Cesium Flow Layer
 
 [![npm version](https://img.shields.io/npm/v/cesium-wind-layer.svg)](https://www.npmjs.com/package/cesium-wind-layer)
 [![license](https://img.shields.io/npm/l/cesium-wind-layer.svg)](https://github.com/your-repo/cesium-wind-layer/blob/main/LICENSE)
@@ -7,9 +7,9 @@
 
 [English](/packages/cesium-wind-layer/readme.md) | [在线演示](https://cesium-wind-layer.opendde.com/)
 
-| Wind Layer | Terrain Occlusion |
+| Flow Layer | Terrain Occlusion |
 |-----------------|------------------------|
-| ![Wind Layer Demo](/pictures/wind.gif) | ![Terrain Occlusion Demo](/pictures/terrain.gif) |
+| ![Flow Layer Demo](/pictures/wind.gif) | ![Terrain Occlusion Demo](/pictures/terrain.gif) |
 
 ## 📚 目录
 
@@ -38,13 +38,13 @@ pnpm add cesium-wind-layer
 
 ```typescript
 import { Viewer } from 'cesium';
-import { WindLayer } from 'cesium-wind-layer';
+import { FlowLayer } from 'cesium-wind-layer';
 
 // 创建 Cesium viewer
 const viewer = new Viewer('cesiumContainer');
 
 // 准备风场数据
-const windData = {
+const flowData = {
   u: {
     array: Float32Array,  // 风速的 U 分量
     min: number,         // 可选：最小值
@@ -66,7 +66,7 @@ const windData = {
 };
 
 // 使用配置创建风场图层
-const windLayer = new WindLayer(viewer, windData, {
+const FlowLayer = new FlowLayer(viewer, flowData, {
   particlesTextureSize: 100,          // 粒子系统的纹理大小
   particleHeight: 1000,               // 粒子距地面高度
   lineWidth: { min: 1, max: 2 },      // 粒子轨迹宽度范围
@@ -84,14 +84,14 @@ const windLayer = new WindLayer(viewer, windData, {
 
 ## 📖 API 参考
 
-### WindLayer
+### FlowLayer
 
 风场可视化的主类。
 
 #### 构造函数选项
 
 ```typescript
-interface WindLayerOptions {
+interface FlowLayerOptions {
   particlesTextureSize: number;              // 粒子纹理大小，决定粒子最大数量（size * size）（默认：100）
   particleHeight: number;                    // 粒子距地面高度（默认：0）
   lineWidth: { min: number; max: number };   // 粒子轨迹宽度范围（默认：{ min: 1, max: 5 }）
@@ -121,9 +121,9 @@ interface WindLayerOptions {
 | `add()` | 将风场图层添加到场景中 |
 | `remove()` | 从场景中移除风场图层 |
 | `show: boolean` | 获取或设置风场图层的可见性 |
-| `updateWindData(data: WindData)` | 更新风场数据 |
-| `updateOptions(options: Partial<WindLayerOptions>)` | 更新风场图层的选项 |
-| `getDataAtLonLat(lon: number, lat: number): WindDataAtLonLat \| null` | 获取指定经纬度的风场数据，返回原始值和插值结果。如果坐标超出范围则返回 null |
+| `updateFlowData(data: FlowData)` | 更新风场数据 |
+| `updateOptions(options: Partial<FlowLayerOptions>)` | 更新风场图层的选项 |
+| `getDataAtLonLat(lon: number, lat: number): FlowDataAtLonLat \| null` | 获取指定经纬度的风场数据，返回原始值和插值结果。如果坐标超出范围则返回 null |
 | `zoomTo(duration?: number)` | 缩放相机以适应风场范围 |
 | `isDestroyed(): boolean` | 检查风场图层是否已被销毁 |
 | `destroy()` | 清理资源并销毁风场图层 |

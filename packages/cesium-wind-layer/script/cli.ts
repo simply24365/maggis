@@ -41,14 +41,24 @@ interface TimeSeriesRecord {
 }
 type TimeSeriesData = TimeSeriesRecord[];
 
-interface VelocityStats { vxMax: number; vyMax: number; }
+interface ArrayWithMinMax {
+  array: Float32Array;
+  min?: number;
+  max?: number;
+}
 
-interface MetaJson {
-  vxMax: number;
-  vyMax: number;
-  num_time: number;
-  size: number;
-  bounds: ProjectedBounds;
+interface FlowData {
+  u: ArrayWithMinMax;
+  v: ArrayWithMinMax;
+  speed?: ArrayWithMinMax;
+  width: number;
+  height: number;
+  bounds: {
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+  };
 }
 
 
@@ -176,131 +186,17 @@ async function generatePolygonMaskPng(polygon: PolygonData, size: number, grid: 
     return sharp(buffer, { raw: { width: size, height: size, channels: 1 } }).png().toBuffer();
 }
 
-function normalizeAndEncode(v: number, vMax: number): number { /* ... same as before ... */ if(vMax===0)return 128;const normalized=Math.max(-1,Math.min(1,v/vMax));return(normalized+1)*127.5}
-
-/** 속도 데이터를 R, G 채널에 인코딩한 PNG를 생성합니다. (가속화 적용) */
-async function generateVelocityPng(
-  polygon: PolygonData,
-  timeStepData: TimeSeriesData,
-  stats: VelocityStats,
-  size: number,
-  grid: SpatialGrid
-): Promise<Buffer> {
-    const { bounds, vertices, triangles } = polygon;
-    const buffer = Buffer.alloc(size * size * 4);
-    const vertexMap = new Map(vertices.map(v => [v.id, v]));
-    const velocityMap = new Map(timeStepData.map(v => [v.nodeId, v]));
-
-    for (let j = 0; j < size; j++) {
-        for (let i = 0; i < size; i++) {
-            const x = bounds.minX + (i / (size - 1)) * (bounds.maxX - bounds.minX);
-            const y = bounds.minY + (j / (size - 1)) * (bounds.maxY - bounds.minY);
-            const pixelIndex = (j * size + i) * 4;
-
-            let interpolated: { vx: number, vy: number } | null = null;
-            const candidateIndices = grid.getCandidateTriangles(x, y);
-
-            for (const triIndex of candidateIndices) {
-                const tri = triangles[triIndex];
-                const v1 = vertexMap.get(tri.vertexIds[0])!;
-                const v2 = vertexMap.get(tri.vertexIds[1])!;
-                const v3 = vertexMap.get(tri.vertexIds[2])!;
-
-                if (isPointInTriangle(x, y, v1, v2, v3)) {
-                    const vel1 = velocityMap.get(v1.id);
-                    const vel2 = velocityMap.get(v2.id);
-                    const vel3 = velocityMap.get(v3.id);
-                    if (!vel1 || !vel2 || !vel3) continue;
-
-                    const den = ((v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y));
-                    if (Math.abs(den) > 1e-10) {
-                        const w1 = ((v2.y - v3.y) * (x - v3.x) + (v3.x - v2.x) * (y - v3.y)) / den;
-                        const w2 = ((v3.y - v1.y) * (x - v3.x) + (v1.x - v3.x) * (y - v3.y)) / den;
-                        const w3 = 1.0 - w1 - w2;
-                        interpolated = {
-                            vx: w1 * vel1.velocityX + w2 * vel2.velocityX + w3 * vel3.velocityX,
-                            vy: w1 * vel1.velocityY + w2 * vel2.velocityY + w3 * vel3.velocityY,
-                        };
-                    }
-                    break; // 첫 번째 삼각형을 찾으면 중단
-                }
-            }
-
-            if (interpolated) {
-                buffer[pixelIndex] = normalizeAndEncode(interpolated.vx, stats.vxMax);
-                buffer[pixelIndex + 1] = normalizeAndEncode(interpolated.vy, stats.vyMax);
-                buffer[pixelIndex + 2] = 0;
-                buffer[pixelIndex + 3] = 255;
-            } else {
-                buffer[pixelIndex + 3] = 0; // Transparent
-            }
-        }
-    }
-    return sharp(buffer, { raw: { width: size, height: size, channels: 4 } }).png().toBuffer();
-}
-
-
 // =================================================================
-// SECTION 5: PNG DESERIALIZER AND CLI HANDLERS (Updated to use SpatialGrid)
+// SECTION 5: CLI HANDLERS
 // =================================================================
-
-function decodeToVelocity(encodedValue: number, vMax: number): number { /* ... same as before ... */ if(vMax===0)return 0;const normalized=(encodedValue/127.5)-1;return normalized*vMax}
-async function deserializeVelocityFromPng(dir: string, t: number): Promise<(x: number, y: number) => { vx: number, vy: number } | null> { /* ... same as before ... */ const metaPath=path.join(dir,"meta.json"),pngPath=path.join(dir,`${t}.png`),meta:MetaJson=JSON.parse(await fs.readFile(metaPath,"utf-8")),{bounds,vxMax,vyMax}=meta,image=sharp(pngPath),{width,height}=await image.metadata();if(!width||!height)throw new Error("이미지 크기를 읽을 수 없습니다.");const rawData=await image.raw().toBuffer();return(x:number,y:number):{vx:number,vy:number}|null=>{if(x<bounds.minX||x>bounds.maxX||y<bounds.minY||y>bounds.maxY)return null;const i=Math.round((x-bounds.minX)/(bounds.maxX-bounds.minX)*(width-1)),j=Math.round((y-bounds.minY)/(bounds.maxY-bounds.minY)*(height-1)),pixelIndex=(j*width+i)*4;if(rawData[pixelIndex+3]<255)return null;const vx=decodeToVelocity(rawData[pixelIndex],vxMax),vy=decodeToVelocity(rawData[pixelIndex+1],vyMax);return{vx,vy}}}
-
-async function handleVelocityTextureAllTime(argv: any) {
-    const { dir, size, outputDir, polygonPath } = argv;
-    console.log(`🚀 모든 시계열에 대한 속도 텍스처 생성을 시작합니다...`);
-    // ... (logging)
-    await fs.mkdir(outputDir, { recursive: true });
-
-    const polygon = await deserializePolygonFromFile(polygonPath);
-    console.log(`\n[1/4] ⚡ 공간 그리드 인덱스 생성 중...`);
-    const grid = new SpatialGrid(polygon); // 그리드 생성
-    console.log(`   - ✅ 그리드 인덱스 생성 완료.`);
-
-    // ... (rest of the logic)
-    const csvFiles = (await fs.readdir(dir)).filter(f => f.endsWith('.csv') && !isNaN(parseInt(path.basename(f, '.csv'), 10)));
-    csvFiles.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-
-    console.log(`\n[2/4] 📂 ${csvFiles.length}개의 CSV 파일에서 전역 최소/최대 속도 계산 중...`);
-    let allTimeSeries: TimeSeriesData[] = [];
-    for (const file of csvFiles) {
-        allTimeSeries.push(await deserializeTimeSeriesFromFile(path.join(dir, file)));
-    }
-    const globalStats = allTimeSeries.flat().reduce((stats, record) => ({
-        vxMax: Math.max(stats.vxMax, Math.abs(record.velocityX)),
-        vyMax: Math.max(stats.vyMax, Math.abs(record.velocityY)),
-    }), { vxMax: 0, vyMax: 0 });
-    console.log(`   - 계산된 전역 최대 속도: vxMax=${globalStats.vxMax.toFixed(4)}, vyMax=${globalStats.vyMax.toFixed(4)}`);
-
-    console.log(`\n[3/4] 🖼️  각 시점에 대한 속도 텍스처 생성 중 (가속화 적용)...`);
-    const generationPromises = csvFiles.map(async (file, index) => {
-        const timeStep = path.basename(file, '.csv');
-        const outputPath = path.join(outputDir, `${timeStep}.png`);
-        const pngBuffer = await generateVelocityPng(polygon, allTimeSeries[index], globalStats, size, grid); // 그리드 전달
-        await fs.writeFile(outputPath, pngBuffer);
-        process.stdout.write(`   - ✅ ${timeStep}.png 저장 완료.\r`);
-    });
-    await Promise.all(generationPromises);
-    console.log(`\n   - 모든 텍스처 생성이 완료되었습니다.`);
-
-    console.log(`\n[4/4] 📝 메타데이터(meta.json) 파일 생성 중...`);
-    const metaData: MetaJson = {
-        vxMax: globalStats.vxMax,
-        vyMax: globalStats.vyMax,
-        num_time: csvFiles.length,
-        size: size,
-        bounds: polygon.bounds,
-    };
-    await fs.writeFile(path.join(outputDir, 'meta.json'), JSON.stringify(metaData, null, 2));
-    console.log(`   - ✅ meta.json 저장 완료.`);
-    console.log(`\n🎉 작업이 성공적으로 완료되었습니다.`);
-}
 
 async function handleMaskTexture(argv: any) {
     const { size, outputDir, polygonPath } = argv;
     console.log(`🎭 마스크 텍스처 생성을 시작합니다...`);
-    // ... (logging)
+    console.log(`   - 폴리곤 파일: ${polygonPath}`);
+    console.log(`   - 텍스처 크기: ${size}x${size}`);
+    console.log(`   - 출력 디렉토리: ${outputDir}`);
+    
     await fs.mkdir(outputDir, { recursive: true });
 
     const polygon = await deserializePolygonFromFile(polygonPath);
@@ -315,39 +211,191 @@ async function handleMaskTexture(argv: any) {
     console.log(`🎉 마스크 텍스처가 ${outputPath}에 저장되었습니다.`);
 }
 
-async function handleTestRead(argv: any) { /* ... same as before ... */ const{dir,t}=argv;console.log("🔍 PNG에서 속도 데이터 읽기 테스트...");console.log(`   - 디렉토리: ${dir}`);console.log(`   - 시간 스텝: ${t}`);try{const velocityProvider=await deserializeVelocityFromPng(dir,t),meta=JSON.parse(await fs.readFile(path.join(dir,"meta.json"),"utf-8")),testX=meta.bounds.minX+(meta.bounds.maxX-meta.bounds.minX)*.5,testY=meta.bounds.minY+(meta.bounds.maxY-meta.bounds.minY)*.5,velocity=velocityProvider(testX,testY);if(velocity){console.log(`   - 좌표 (${testX.toFixed(2)}, ${testY.toFixed(2)}) 에서의 속도:`);console.log(`     vx = ${velocity.vx.toFixed(4)}, vy = ${velocity.vy.toFixed(4)}`)}else console.log("   - 해당 좌표에 유효한 데이터가 없습니다.")}catch(e:any){console.error("❌ 테스트 중 오류 발생:",e.message)}}
+async function handleGenerateFlowJsonAllTime(argv: any) {
+    const { inputDir, textureSize = 1024, outputDir = inputDir, polygonPath } = argv;
+    console.log(`🌊 모든 시계열에 대한 FlowData JSON 생성을 시작합니다...`);
+    console.log(`   - 입력 디렉토리: ${inputDir}`);
+    console.log(`   - 텍스처 크기: ${textureSize}x${textureSize}`);
+    console.log(`   - 출력 디렉토리: ${outputDir}`);
+    console.log(`   - 폴리곤 파일: ${polygonPath}`);
+
+    try {
+        await fs.mkdir(outputDir, { recursive: true });
+
+        // Find all CSV files with digit pattern
+        const csvFiles = (await fs.readdir(inputDir))
+            .filter(f => f.endsWith('.csv') && /^\d+\.csv$/.test(f))
+            .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+
+        if (csvFiles.length === 0) {
+            throw new Error('입력 디렉토리에서 숫자 패턴의 CSV 파일을 찾을 수 없습니다.');
+        }
+
+        console.log(`   - 발견된 CSV 파일: ${csvFiles.length}개`);
+
+        // Load polygon data from specified path
+        const polygon = await deserializePolygonFromFile(polygonPath);
+        console.log(`   - 폴리곤 데이터 로드 완료`);
+
+        // Create spatial grid for acceleration
+        const grid = new SpatialGrid(polygon);
+
+        // Process each CSV file
+        for (let i = 0; i < csvFiles.length; i++) {
+            const csvFile = csvFiles[i];
+            const timeStep = path.basename(csvFile, '.csv');
+            console.log(`\n[${i + 1}/${csvFiles.length}] 처리 중: ${csvFile}`);
+
+            // Load time series data
+            const timeSeriesData = await deserializeTimeSeriesFromFile(path.join(inputDir, csvFile));
+            
+            // Generate velocity field
+            const flowData = await generateFlowDataFromTimeSeries(
+                polygon, 
+                timeSeriesData, 
+                textureSize, 
+                grid
+            );
+
+            // Save FlowData JSON
+            const outputPath = path.join(outputDir, `flow_${timeStep}.json`);
+            await fs.writeFile(outputPath, JSON.stringify(flowData, null, 2));
+            console.log(`   - ✅ flow_${timeStep}.json 저장 완료`);
+        }
+
+        console.log(`\n🎉 모든 FlowData JSON 파일 생성이 완료되었습니다!`);
+
+    } catch (error: any) {
+        console.error(`❌ 오류 발생: ${error.message}`);
+        process.exit(1);
+    }
+}
+
+async function generateFlowDataFromTimeSeries(
+    polygon: PolygonData,
+    timeSeriesData: TimeSeriesData,
+    size: number,
+    grid: SpatialGrid
+): Promise<FlowData> {
+    const { bounds, vertices, triangles } = polygon;
+    const totalPixels = size * size;
+    
+    // Initialize arrays
+    const uArray = new Float32Array(totalPixels);
+    const vArray = new Float32Array(totalPixels);
+    const speedArray = new Float32Array(totalPixels);
+    
+    const vertexMap = new Map(vertices.map(v => [v.id, v]));
+    const velocityMap = new Map(timeSeriesData.map(v => [v.nodeId, v]));
+
+    let uMin = Infinity, uMax = -Infinity;
+    let vMin = Infinity, vMax = -Infinity;
+    let speedMin = Infinity, speedMax = -Infinity;
+
+    // Generate velocity field for each pixel
+    for (let j = 0; j < size; j++) {
+        for (let i = 0; i < size; i++) {
+            const x = bounds.minX + (i / (size - 1)) * (bounds.maxX - bounds.minX);
+            const y = bounds.minY + (j / (size - 1)) * (bounds.maxY - bounds.minY);
+            const arrayIndex = j * size + i;
+
+            let interpolated: { vx: number, vy: number } | null = null;
+            const candidateIndices = grid.getCandidateTriangles(x, y);
+
+            // Find triangle containing this point and interpolate velocity
+            for (const triIndex of candidateIndices) {
+                const tri = triangles[triIndex];
+                const v1 = vertexMap.get(tri.vertexIds[0])!;
+                const v2 = vertexMap.get(tri.vertexIds[1])!;
+                const v3 = vertexMap.get(tri.vertexIds[2])!;
+
+                if (isPointInTriangle(x, y, v1, v2, v3)) {
+                    // Get velocity data for triangle vertices
+                    const vel1 = velocityMap.get(tri.vertexIds[0]);
+                    const vel2 = velocityMap.get(tri.vertexIds[1]);
+                    const vel3 = velocityMap.get(tri.vertexIds[2]);
+
+                    if (vel1 && vel2 && vel3) {
+                        // Perform barycentric interpolation
+                        const denom = (v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y);
+                        if (Math.abs(denom) > 1e-10) {
+                            const w1 = ((v2.y - v3.y) * (x - v3.x) + (v3.x - v2.x) * (y - v3.y)) / denom;
+                            const w2 = ((v3.y - v1.y) * (x - v3.x) + (v1.x - v3.x) * (y - v3.y)) / denom;
+                            const w3 = 1 - w1 - w2;
+
+                            interpolated = {
+                                vx: w1 * vel1.velocityX + w2 * vel2.velocityX + w3 * vel3.velocityX,
+                                vy: w1 * vel1.velocityY + w2 * vel2.velocityY + w3 * vel3.velocityY
+                            };
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (interpolated) {
+                // Store velocity components (no normalization needed)
+                uArray[arrayIndex] = interpolated.vx;
+                vArray[arrayIndex] = interpolated.vy;
+                const speed = Math.sqrt(interpolated.vx * interpolated.vx + interpolated.vy * interpolated.vy);
+                speedArray[arrayIndex] = speed;
+
+                // Update min/max values
+                uMin = Math.min(uMin, interpolated.vx);
+                uMax = Math.max(uMax, interpolated.vx);
+                vMin = Math.min(vMin, interpolated.vy);
+                vMax = Math.max(vMax, interpolated.vy);
+                speedMin = Math.min(speedMin, speed);
+                speedMax = Math.max(speedMax, speed);
+            } else {
+                // No data - set to zero
+                uArray[arrayIndex] = 0;
+                vArray[arrayIndex] = 0;
+                speedArray[arrayIndex] = 0;
+            }
+        }
+    }
+
+    // Handle case where no valid data was found
+    if (uMin === Infinity) {
+        uMin = uMax = vMin = vMax = speedMin = speedMax = 0;
+    }
+
+    // Create FlowData object
+    const flowData: FlowData = {
+        u: {
+            array: uArray,
+            min: uMin,
+            max: uMax
+        },
+        v: {
+            array: vArray,
+            min: vMin,
+            max: vMax
+        },
+        speed: {
+            array: speedArray,
+            min: speedMin,
+            max: speedMax
+        },
+        width: size,
+        height: size,
+        bounds: {
+            west: bounds.minX,
+            south: bounds.minY,
+            east: bounds.maxX,
+            north: bounds.maxY
+        }
+    };
+
+    return flowData;
+}
 
 // =================================================================
 // SECTION 6: YARGS CLI SETUP
 // =================================================================
 
 yargs(hideBin(process.argv))
-  .command(
-    'velocity-texture-all-time',
-    '모든 시계열에 대한 속도 텍스처를 생성합니다',
-    (y) => y
-      .option('dir', {
-        type: 'string',
-        demandOption: true,
-        describe: 'CSV 파일들이 있는 디렉토리 경로'
-      })
-      .option('polygon-path', {
-        type: 'string',
-        demandOption: true,
-        describe: '폴리곤 파일(.raw) 경로'
-      })
-      .option('output-dir', {
-        type: 'string',
-        demandOption: true,
-        describe: '출력 디렉토리 경로'
-      })
-      .option('size', {
-        type: 'number',
-        default: 512,
-        describe: '텍스처 크기 (픽셀)'
-      }),
-    handleVelocityTextureAllTime
-  )
   .command(
     'mask-texture',
     '폴리곤 마스크 텍스처를 생성합니다',
@@ -370,20 +418,29 @@ yargs(hideBin(process.argv))
     handleMaskTexture
   )
   .command(
-    'test-read-velocity',
-    'PNG에서 속도 데이터 읽기 테스트',
+    'generate-flow-json-all-time',
+    '모든 시계열에 대한 FlowData JSON 파일을 생성합니다',
     (y) => y
-      .option('dir', {
+      .option('input-dir', {
         type: 'string',
         demandOption: true,
-        describe: '속도 텍스처가 있는 디렉토리 경로'
+        describe: 'CSV 파일들이 있는 입력 디렉토리 경로'
       })
-      .option('t', {
-        type: 'number',
+      .option('polygon-path', {
+        type: 'string',
         demandOption: true,
-        describe: '테스트할 시간 스텝'
+        describe: '폴리곤 파일(.raw) 경로'
+      })
+      .option('texture-size', {
+        type: 'number',
+        default: 1024,
+        describe: '텍스처 크기 (픽셀, 기본값: 1024)'
+      })
+      .option('output-dir', {
+        type: 'string',
+        describe: '출력 디렉토리 경로 (기본값: 입력 디렉토리와 동일)'
       }),
-    handleTestRead
+    handleGenerateFlowJsonAllTime
   )
   .demandCommand(1, '하나의 명령어를 선택해야 합니다.')
   .strict()

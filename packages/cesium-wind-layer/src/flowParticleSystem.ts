@@ -1,22 +1,22 @@
-import { WindLayerOptions, WindData } from './types';
-import { WindParticlesComputing } from './windParticlesComputing';
-import { WindParticlesRendering } from './windParticlesRendering';
+import { FlowLayerOptions, FlowData } from './types';
+import { FlowParticlesComputing } from './flowParticlesComputing';
+import { FlowParticlesRendering } from './flowParticlesRendering';
 import CustomPrimitive from './customPrimitive';
 import { ClearCommand, Color, Pass } from 'cesium';
 import { deepMerge } from './utils';
 
-export class WindParticleSystem {
-  computing: WindParticlesComputing;
-  rendering: WindParticlesRendering;
-  options: WindLayerOptions;
+export class FlowParticleSystem {
+  computing: FlowParticlesComputing;
+  rendering: FlowParticlesRendering;
+  options: FlowLayerOptions;
   viewerParameters: any;
   context: any;
-  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any, scene: any) {
+  constructor(context: any, flowData: Required<FlowData>, options: FlowLayerOptions, viewerParameters: any, scene: any) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
-    this.computing = new WindParticlesComputing(context, windData, options, viewerParameters, scene);
-    this.rendering = new WindParticlesRendering(context, options, viewerParameters, this.computing);
+    this.computing = new FlowParticlesComputing(context, flowData, options, viewerParameters, scene);
+    this.rendering = new FlowParticlesRendering(context, options, viewerParameters, this.computing);
     this.clearFramebuffers();
   }
 
@@ -46,7 +46,7 @@ export class WindParticleSystem {
     });
   }
 
-  changeOptions(options: Partial<WindLayerOptions>) {
+  changeOptions(options: Partial<FlowLayerOptions>) {
     let maxParticlesChanged = false;
     if (options.particlesTextureSize && this.options.particlesTextureSize !== options.particlesTextureSize) {
       maxParticlesChanged = true;

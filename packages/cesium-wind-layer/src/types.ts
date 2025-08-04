@@ -1,6 +1,6 @@
 import { Cartesian3 } from 'cesium';
 
-export interface WindLayerOptions {
+export interface FlowLayerOptions {
   /**
    * Size of the particle texture. Determines the maximum number of particles (size squared). Default is 100.
    */
@@ -44,7 +44,7 @@ export interface WindLayerOptions {
    */
   dropRateBump: number;
   /**
-   * Whether to flip the Y-axis of the wind data. Default is false.
+   * Whether to flip the Y-axis of the flow data. Default is false.
    */
   flipY: boolean;
   /**
@@ -79,21 +79,26 @@ export interface WindLayerOptions {
    * When set to false, particles will remain static.
    */
   dynamic: boolean;
+  /**
+   * URL of the mask image to fetch and apply. Optional.
+   * The image will be converted to a grayscale mask where white areas are valid and black areas are invalid.
+   */
+  maskUrl?: string;
 }
 
-export interface WindDataDemention {
+export interface ArrayWithMinMax {
   array: Float32Array;
   min?: number;
   max?: number;
 }
 
-export interface WindData {
-  u: WindDataDemention;
-  v: WindDataDemention;
-  speed?: WindDataDemention;
+export interface FlowData {
+  u: ArrayWithMinMax;
+  v: ArrayWithMinMax;
+  speed?: ArrayWithMinMax;
   width: number;
   height: number;
-  mask?: WindDataDemention;
+  mask?: ArrayWithMinMax;
   bounds: {
     west: number;
     south: number;
@@ -107,7 +112,7 @@ export interface Particle {
   age: number;
 }
 
-export interface WindDataAtLonLat {
+export interface FlowDataAtLonLat {
   /**
    * Original data at the grid point
    */

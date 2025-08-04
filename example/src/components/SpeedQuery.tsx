@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Typography, Space, Button } from 'antd';
 import styled from 'styled-components';
-import { WindDataAtLonLat, WindLayer } from 'cesium-wind-layer';
+import { FlowDataAtLonLat, FlowLayer } from 'cesium-wind-layer';
 import { Viewer, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartographic, Math as CesiumMath } from 'cesium';
 import { GithubOutlined } from '@ant-design/icons';
 
@@ -127,17 +127,17 @@ const ToggleButton = styled(Button)`
   height: 24px;
 `;
 
-interface WindData extends WindDataAtLonLat {
+interface FlowData extends FlowDataAtLonLat {
   direction?: number;
 }
 
 interface SpeedQueryProps {
-  windLayer: WindLayer | null;
+  flowLayer: FlowLayer | null;
   viewer: Viewer | null;
 }
 
-export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => {
-  const [queryResult, setQueryResult] = useState<WindData | null>(null);
+export const SpeedQuery: React.FC<SpeedQueryProps> = ({ flowLayer, viewer }) => {
+  const [queryResult, setQueryResult] = useState<FlowData | null>(null);
   const [location, setLocation] = useState<{ lon: number; lat: number } | null>(null);
   const [showInterpolated, setShowInterpolated] = useState(true);
   const lastLocationRef = useRef<{ lon: number; lat: number } | null>(null);
@@ -163,12 +163,12 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
   };
 
   useEffect(() => {
-    if (!windLayer) return;
+    if (!flowLayer) return;
 
     const handleDataChange = () => {
       if (lastLocationRef.current) {
         try {
-          const result = windLayer.getDataAtLonLat(lastLocationRef.current.lon, lastLocationRef.current.lat);
+          const result = flowLayer.getDataAtLonLat(lastLocationRef.current.lon, lastLocationRef.current.lat);
           if (result) {
             const data = showInterpolated ? result.interpolated : result.original;
             const direction = calculateWindDirection(data.u, data.v);
@@ -177,28 +177,28 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
             setQueryResult(null);
           }
         } catch (error) {
-          console.error('Failed to get wind data:', error);
+          console.error('Failed to get flow data:', error);
           setQueryResult(null);
         }
       }
     };
 
     // Add event listener for data changes
-    windLayer.addEventListener('dataChange', handleDataChange);
+    flowLayer.addEventListener('dataChange', handleDataChange);
 
     return () => {
-      // Remove event listener when component unmounts or windLayer changes
-      windLayer.removeEventListener('dataChange', handleDataChange);
+      // Remove event listener when component unmounts or flowLayer changes
+      flowLayer.removeEventListener('dataChange', handleDataChange);
     };
-  }, [windLayer, showInterpolated]);
+  }, [flowLayer, showInterpolated]);
 
   useEffect(() => {
-    if (!location || !windLayer) return;
+    if (!location || !flowLayer) return;
     
     lastLocationRef.current = location;
     
     try {
-      const result = windLayer.getDataAtLonLat(location.lon, location.lat);
+      const result = flowLayer.getDataAtLonLat(location.lon, location.lat);
       if (result) {
         const data = showInterpolated ? result.interpolated : result.original;
         const direction = calculateWindDirection(data.u, data.v);
@@ -207,13 +207,13 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
         setQueryResult(null);
       }
     } catch (error) {
-      console.error('Failed to get wind data:', error);
+      console.error('Failed to get flow data:', error);
       setQueryResult(null);
     }
-  }, [windLayer, location, showInterpolated]);
+  }, [flowLayer, location, showInterpolated]);
 
   useEffect(() => {
-    if (!viewer || !windLayer) return;
+    if (!viewer || !flowLayer) return;
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
     const handleClick = (movement: any) => {
@@ -232,7 +232,7 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
     return () => {
       handler.destroy();
     };
-  }, [viewer, windLayer]);
+  }, [viewer, flowLayer]);
 
   const currentData = queryResult ? (showInterpolated ? queryResult.interpolated : queryResult.original) : null;
 
@@ -241,7 +241,7 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
       <QueryInfo>
         {!location && (
           <Text style={{ fontSize: '13px' }}>
-            <span style={{ opacity: 0.7 }}>👆</span> Click to query wind info
+            <span style={{ opacity: 0.7 }}>👆</span> Click to query flow info
           </Text>
         )}
         
@@ -268,12 +268,12 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ windLayer, viewer }) => 
             
             {queryResult && currentData && (
               <DataGroup>
-                <DataItem title="Wind Speed">
+                <DataItem title="Flow Speed">
                   💨 Speed: {currentData.speed.toFixed(1)} m/s
                 </DataItem>
                 
                 {currentData.speed > 0 && (
-                  <DataItem title="Wind Direction">
+                  <DataItem title="Flow Direction">
                     <DirectionArrow $angle={(queryResult.direction || 0) - 90}>➤</DirectionArrow>
                     {' '}Direction: {queryResult.direction?.toFixed(0)}° ({getCardinalDirection(queryResult.direction || 0)})
                   </DataItem>

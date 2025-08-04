@@ -16,7 +16,7 @@
   - Add lineWidth range control in ControlPanel component
 
   This change allows for more dynamic and visually appealing particle trails by varying
-  the line width based on wind speed, similar to how line length works.
+  the line width based on flow speed, similar to how line length works.
 
 ## 0.9.0
 
@@ -29,7 +29,7 @@
   - Set default lineLength range to { min: 20, max: 100 }
   - Set default lineWidth to 5.0
   - Update control panel UI to support lineLength range adjustment
-  - Add different lineLength ranges for wind and ocean data
+  - Add different lineLength ranges for flow and ocean data
 
 ## 0.8.0
 
@@ -37,7 +37,7 @@
 
 - 770381e: feat: add dynamic option to control particle animation
 
-  - Add new `dynamic` option to WindLayerOptions to control particle animation state
+  - Add new `dynamic` option to FlowLayerOptions to control particle animation state
   - Add dynamic switch control in ControlPanel component
   - Set default value of dynamic option to true
   - Update types and documentation
@@ -97,7 +97,7 @@
 
 ### Minor Changes
 
-- feat: add domain and displayRange options for wind layer
+- feat: add domain and displayRange options for flow layer
   Changes:
 
   1. domain controls the rendering range for color mapping
@@ -109,13 +109,13 @@
 
 ### Minor Changes
 
-- feat: add event system for wind layer
+- feat: add event system for flow layer
 
   - Add event system for data and options changes
-  - Add WindLayerEventType and WindLayerEventCallback types
+  - Add FlowLayerEventType and FlowLayerEventCallback types
   - Implement addEventListener and removeEventListener methods
   - Add event dispatching for data and options updates
-  - Improve texture recreation when updating wind data
+  - Improve texture recreation when updating flow data
 
 ## 0.5.3
 
@@ -148,7 +148,7 @@
 
 ### Minor Changes
 
-- feat: enhance wind layer visualization and data query
+- feat: enhance flow layer visualization and data query
 
   - Improve particle system performance and coverage
 
@@ -157,13 +157,13 @@
     - Adjust particle visibility calculation
     - Add 5% buffer to view range for smoother transitions
 
-  - Enhance wind data query functionality
-    - Refactor WindDataAtLonLat interface with clear structure
-    - Add bilinear interpolation for wind data
+  - Enhance flow data query functionality
+    - Refactor FlowDataAtLonLat interface with clear structure
+    - Add bilinear interpolation for flow data
     - Separate original and interpolated data in query results
     - Add detailed JSDoc comments for better type documentation
 
-  BREAKING CHANGE: WindDataAtLonLat interface structure has changed. Now returns data in 'original' and 'interpolated' sub-objects.
+  BREAKING CHANGE: FlowDataAtLonLat interface structure has changed. Now returns data in 'original' and 'interpolated' sub-objects.
 
 ## 0.4.3
 

@@ -1,12 +1,12 @@
 import { PixelDatatype, PixelFormat, Sampler, Texture, TextureMagnificationFilter, TextureMinificationFilter, Cartesian2, FrameRateMonitor } from 'cesium';
-import { WindLayerOptions, WindData } from './types';
+import { FlowLayerOptions, FlowData } from './types';
 import { ShaderManager } from './shaderManager';
 import CustomPrimitive from './customPrimitive'
 import { deepMerge } from './utils';
 
-export class WindParticlesComputing {
+export class FlowParticlesComputing {
   context: any;
-  options: WindLayerOptions;
+  options: FlowLayerOptions;
   viewerParameters: any;
   windTextures!: {
     U: Texture;
@@ -26,16 +26,16 @@ export class WindParticlesComputing {
     postProcessingPosition: CustomPrimitive;
     maskCheck: CustomPrimitive;
   };
-  windData: Required<WindData>;
+  flowData: Required<FlowData>;
   private frameRateMonitor: FrameRateMonitor;
   frameRate: number = 60;
   frameRateAdjustment: number = 1;
 
-  constructor(context: any, windData: Required<WindData>, options: WindLayerOptions, viewerParameters: any, scene: any) {
+  constructor(context: any, flowData: Required<FlowData>, options: FlowLayerOptions, viewerParameters: any, scene: any) {
     this.context = context;
     this.options = options;
     this.viewerParameters = viewerParameters;
-    this.windData = windData;
+    this.flowData = flowData;
 
     this.frameRateMonitor = new FrameRateMonitor({
       scene: scene,
@@ -83,8 +83,8 @@ export class WindParticlesComputing {
   createWindTextures() {
     const options = {
       context: this.context,
-      width: this.windData.width,
-      height: this.windData.height,
+      width: this.flowData.width,
+      height: this.flowData.height,
       pixelFormat: PixelFormat.RED,
       pixelDatatype: PixelDatatype.FLOAT,
       flipY: this.options.flipY ?? false,
@@ -98,19 +98,19 @@ export class WindParticlesComputing {
       U: new Texture({
         ...options,
         source: {
-          arrayBufferView: new Float32Array(this.windData.u.array)
+          arrayBufferView: new Float32Array(this.flowData.u.array)
         }
       }),
       V: new Texture({
         ...options,
         source: {
-          arrayBufferView: new Float32Array(this.windData.v.array)
+          arrayBufferView: new Float32Array(this.flowData.v.array)
         }
       }),
       mask: new Texture({
         ...options,
         source: {
-          arrayBufferView: new Float32Array(this.windData.mask.array)
+          arrayBufferView: new Float32Array(this.flowData.mask.array)
         }
       }),
     };
@@ -153,17 +153,17 @@ export class WindParticlesComputing {
         uniformMap: {
           U: () => this.windTextures.U,
           V: () => this.windTextures.V,
-          uRange: () => new Cartesian2(this.windData.u.min, this.windData.u.max),
-          vRange: () => new Cartesian2(this.windData.v.min, this.windData.v.max),
-          speedRange: () => new Cartesian2(this.windData.speed.min, this.windData.speed.max),
+          uRange: () => new Cartesian2(this.flowData.u.min, this.flowData.u.max),
+          vRange: () => new Cartesian2(this.flowData.v.min, this.flowData.v.max),
+          speedRange: () => new Cartesian2(this.flowData.speed.min, this.flowData.speed.max),
           currentParticlesPosition: () => this.particlesTextures.currentParticlesPosition,
           speedScaleFactor: () => {
             return (this.viewerParameters.pixelSize + 50) * this.options.speedFactor;
           },
           frameRateAdjustment: () => this.frameRateAdjustment,
-          dimension: () => new Cartesian2(this.windData.width, this.windData.height),
-          minimum: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.south),
-          maximum: () => new Cartesian2(this.windData.bounds.east, this.windData.bounds.north),
+          dimension: () => new Cartesian2(this.flowData.width, this.flowData.height),
+          minimum: () => new Cartesian2(this.flowData.bounds.west, this.flowData.bounds.south),
+          maximum: () => new Cartesian2(this.flowData.bounds.east, this.flowData.bounds.north),
         },
         fragmentShaderSource: ShaderManager.getCalculateSpeedShader(),
         outputTexture: this.particlesTextures.particlesSpeed,
@@ -202,8 +202,8 @@ export class WindParticlesComputing {
           particlesSpeed: () => this.particlesTextures.particlesSpeed,
           lonRange: () => this.viewerParameters.lonRange,
           latRange: () => this.viewerParameters.latRange,
-          dataLonRange: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.east),
-          dataLatRange: () => new Cartesian2(this.windData.bounds.south, this.windData.bounds.north),
+          dataLonRange: () => new Cartesian2(this.flowData.bounds.west, this.flowData.bounds.east),
+          dataLatRange: () => new Cartesian2(this.flowData.bounds.south, this.flowData.bounds.north),
           randomCoefficient: function () {
             return Math.random();
           },
@@ -226,11 +226,11 @@ export class WindParticlesComputing {
         uniformMap: {
           currentParticlesPosition: () => this.particlesTextures.postProcessingPosition,
           mask: () => this.windTextures.mask,
-          dataLonRange: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.east),
-          dataLatRange: () => new Cartesian2(this.windData.bounds.south, this.windData.bounds.north),
-          dimension: () => new Cartesian2(this.windData.width, this.windData.height),
-          minimum: () => new Cartesian2(this.windData.bounds.west, this.windData.bounds.south),
-          maximum: () => new Cartesian2(this.windData.bounds.east, this.windData.bounds.north),
+          dataLonRange: () => new Cartesian2(this.flowData.bounds.west, this.flowData.bounds.east),
+          dataLatRange: () => new Cartesian2(this.flowData.bounds.south, this.flowData.bounds.north),
+          dimension: () => new Cartesian2(this.flowData.width, this.flowData.height),
+          minimum: () => new Cartesian2(this.flowData.bounds.west, this.flowData.bounds.south),
+          maximum: () => new Cartesian2(this.flowData.bounds.east, this.flowData.bounds.north),
           randomCoefficient: function () {
             return Math.random();
           }
@@ -254,12 +254,12 @@ export class WindParticlesComputing {
     this.createWindTextures();
   }
 
-  updateWindData(data: Required<WindData>) {
-    this.windData = data;
+  updateFlowData(data: Required<FlowData>) {
+    this.flowData = data;
     this.reCreateWindTextures();
   }
 
-  updateOptions(options: Partial<WindLayerOptions>) {
+  updateOptions(options: Partial<FlowLayerOptions>) {
     const needUpdateWindTextures = options.flipY !== undefined && options.flipY !== this.options.flipY;
     this.options = deepMerge(options, this.options);
     if (needUpdateWindTextures) {
@@ -267,7 +267,7 @@ export class WindParticlesComputing {
     }
   }
 
-  processWindData(data: {
+  processFlowData(data: {
     array: Float32Array;
     min?: number;
     max?: number;

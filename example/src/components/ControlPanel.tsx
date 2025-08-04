@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Switch, Space, Tooltip, Typography, Form, InputNumber } from 'antd';
-import { WindLayer, WindLayerOptions } from 'cesium-wind-layer';
+import { FlowLayer, FlowLayerOptions } from 'cesium-wind-layer';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import ColorTableInput from './ColorTableInput';
 import styled from 'styled-components';
@@ -187,19 +187,19 @@ const TitleButton = styled.button`
 `;
 
 interface ControlPanelProps {
-  windLayer: WindLayer | null;
-  initialOptions?: Partial<WindLayerOptions>;
-  onOptionsChange?: (options: Partial<WindLayerOptions>) => void;
+  flowLayer: FlowLayer | null;
+  initialOptions?: Partial<FlowLayerOptions>;
+  onOptionsChange?: (options: Partial<FlowLayerOptions>) => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
-  windLayer,
+  flowLayer,
   initialOptions,
   onOptionsChange,
 }) => {
   const [form] = Form.useForm();
-  const [options, setOptions] = useState<WindLayerOptions>({
-    ...WindLayer.defaultOptions,
+  const [options, setOptions] = useState<FlowLayerOptions>({
+    ...FlowLayer.defaultOptions,
     ...initialOptions,
   });
   
@@ -226,13 +226,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     </div>
   );
 
-  const handleValuesChange = (changedValues: Partial<WindLayerOptions>, allValues: WindLayerOptions) => {
+  const handleValuesChange = (changedValues: Partial<FlowLayerOptions>, allValues: FlowLayerOptions) => {
     setOptions(allValues);
     
     if (changedValues.colors) {
-      windLayer?.updateOptions({ colors: changedValues.colors });
+      flowLayer?.updateOptions({ colors: changedValues.colors });
     } else {
-      windLayer?.updateOptions(changedValues);
+      flowLayer?.updateOptions(changedValues);
     }
 
     onOptionsChange?.(changedValues);
@@ -243,26 +243,26 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <StyledCard
         title={
           <CardTitle onClick={() => setCollapsed(!collapsed)}>
-            <TitleText>Wind Layer Controls</TitleText>
+            <TitleText>Flow Layer Controls</TitleText>
             <TitleActions>
               <TitleButton
                 onClick={(e) => {
                   e.stopPropagation();
                   setVisible(!visible);
-                  if (windLayer) {
-                    windLayer.show = !visible;
+                  if (flowLayer) {
+                    flowLayer.show = !visible;
                   }
                 }}
-                title={visible ? "Hide Wind Layer" : "Show Wind Layer"}
+                title={visible ? "Hide Flow Layer" : "Show Flow Layer"}
               >
                 {visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
               </TitleButton>
               <TitleButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  windLayer?.zoomTo(1);
+                  flowLayer?.zoomTo(1);
                 }}
-                title="Zoom to Wind Field"
+                title="Zoom to Flow Field"
               >
                 <ZoomInOutlined />
               </TitleButton>
@@ -464,7 +464,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 name="flipY"
                 label={renderLabel(
                   'Flip Y Axis',
-                  'Whether to flip the Y-axis of the wind data.'
+                  'Whether to flip the Y-axis of the flow data.'
                 )}
                 valuePropName="checked"
               >
@@ -479,7 +479,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 name="useViewerBounds"
                 label={renderLabel(
                   'Use Viewer Bounds',
-                  'Generate particles within the current view bounds instead of the entire wind field.'
+                  'Generate particles within the current view bounds instead of the entire flow field.'
                 )}
                 valuePropName="checked"
               >

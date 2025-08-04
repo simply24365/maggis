@@ -7,16 +7,17 @@ import {
   Rectangle
 } from 'cesium';
 
-import { WindLayerOptions, WindData, WindDataAtLonLat } from './types';
-import { WindParticleSystem } from './windParticleSystem';
-import { deepMerge } from './utils';
+import { FlowLayerOptions as FlowLayerOptions, FlowData, FlowDataAtLonLat as FlowDataAtLonLat } from './types';
+import { FlowParticleSystem } from './flowParticleSystem';
+import { deepMerge, fetchImageAsMask } from './utils';
+import { log } from 'console';
 
 export * from './types';
 
-type WindLayerEventType = 'dataChange' | 'optionsChange';
-type WindLayerEventCallback = (data: WindData | WindLayerOptions) => void;
+type FlowLayerEventType = 'dataChange' | 'optionsChange';
+type FlowLayerEventCallback = (data: FlowData | FlowLayerOptions) => void;
 
-export const DefaultOptions: WindLayerOptions = {
+export const DefaultOptions: FlowLayerOptions = {
   particlesTextureSize: 100,
   dropRate: 0.003,
   particleHeight: 1000,
@@ -32,10 +33,10 @@ export const DefaultOptions: WindLayerOptions = {
   dynamic: true
 }
 
-export class WindLayer {
+export class FlowLayer {
   private _show: boolean = true;
   private _resized: boolean = false;
-  windData: Required<WindData>;
+  flowData: Required<FlowData>;
 
   get show(): boolean {
     return this._show;
@@ -48,12 +49,12 @@ export class WindLayer {
     }
   }
 
-  static defaultOptions: WindLayerOptions = DefaultOptions;
+  static defaultOptions: FlowLayerOptions = DefaultOptions;
 
   viewer: Viewer;
   scene: Scene;
-  options: WindLayerOptions;
-  private particleSystem: WindParticleSystem;
+  options: FlowLayerOptions;
+  private particleSystem: FlowParticleSystem;
   private viewerParameters: {
     lonRange: Cartesian2;
     latRange: Cartesian2;
@@ -62,15 +63,15 @@ export class WindLayer {
   };
   private _isDestroyed: boolean = false;
   private primitives: any[] = [];
-  private eventListeners: Map<WindLayerEventType, Set<WindLayerEventCallback>> = new Map();
+  private eventListeners: Map<FlowLayerEventType, Set<FlowLayerEventCallback>> = new Map();
 
   /**
-   * WindLayer class for visualizing wind field data with particle animation in Cesium.
+   * FlowLayer class for visualizing flow field data with particle animation in Cesium.
    * 
    * @class
    * @param {Viewer} viewer - The Cesium viewer instance.
-   * @param {WindData} windData - The wind field data to visualize.
-   * @param {Partial<WindLayerOptions>} [options] - Optional configuration options for the wind layer.
+   * @param {FlowData} flowData - The flow field data to visualize.
+   * @param {Partial<FlowLayerOptions>} [options] - Optional configuration options for the flow layer.
    * @param {number} [options.particlesTextureSize=100] - Size of the particle texture. Determines the maximum number of particles (size squared).
    * @param {number} [options.particleHeight=0] - Height of particles above the ground in meters.
    * @param {Object} [options.lineWidth={ min: 1, max: 2 }] - Width range of particle trails.
@@ -79,17 +80,20 @@ export class WindLayer {
    * @param {number} [options.dropRate=0.003] - Rate at which particles are dropped (reset).
    * @param {number} [options.dropRateBump=0.001] - Additional drop rate for slow-moving particles.
    * @param {string[]} [options.colors=['white']] - Array of colors for particles. Can be used to create color gradients.
-   * @param {boolean} [options.flipY=false] - Whether to flip the Y-axis of the wind data.
+   * @param {boolean} [options.flipY=false] - Whether to flip the Y-axis of the flow data.
    * @param {boolean} [options.useViewerBounds=false] - Whether to use the viewer bounds to generate particles.
    * @param {boolean} [options.dynamic=true] - Whether to enable dynamic particle animation.
+   * @param {string} [options.maskUrl] - URL of the mask image to fetch and apply.
    */
-  constructor(viewer: Viewer, windData: WindData, options?: Partial<WindLayerOptions>) {
+  constructor(viewer: Viewer, flowData: FlowData, options?: Partial<FlowLayerOptions>) {
     this.show = true;
     this.viewer = viewer;
     this.scene = viewer.scene;
-    this.options = { ...WindLayer.defaultOptions, ...options };
-    this.windData = this.processWindData(windData);
-
+    this.options = { ...FlowLayer.defaultOptions, ...options };
+    
+    // Initialize with basic flow data first
+    this.flowData = this.processFlowData(flowData);
+    
     this.viewerParameters = {
       lonRange: new Cartesian2(-180, 180),
       latRange: new Cartesian2(-90, 90),
@@ -97,11 +101,38 @@ export class WindLayer {
       sceneMode: this.scene.mode
     };
     this.updateViewerParameters();
-
-    this.particleSystem = new WindParticleSystem(this.scene.context, this.windData, this.options, this.viewerParameters, this.scene);
+    
+    this.particleSystem = new FlowParticleSystem(this.scene.context, this.flowData, this.options, this.viewerParameters, this.scene);
     this.add();
-
     this.setupEventListeners();
+
+    // If maskUrl is provided, fetch and apply the mask asynchronously
+    if (this.options.maskUrl) {
+      this.loadMask(this.options.maskUrl, flowData);
+    }
+  }
+
+  /**
+   * Loads a mask from an image URL and applies it to the flow data
+   * @param maskUrl - URL of the mask image
+   * @param originalFlowData - Original flow data to apply mask to
+   */
+  private async loadMask(maskUrl: string, originalFlowData: FlowData): Promise<void> {
+    try {
+      const maskData = await fetchImageAsMask(maskUrl, originalFlowData.width, originalFlowData.height);
+      
+      // Create new flow data with the fetched mask
+      const flowDataWithMask: FlowData = {
+        ...originalFlowData,
+        mask: maskData
+      };
+      
+      // Update the flow data with the new mask
+      this.updateFlowData(flowDataWithMask);
+    } catch (error) {
+      console.warn('Failed to load mask from URL:', maskUrl, error);
+      // Continue without mask if loading fails
+    }
   }
 
   private setupEventListeners(): void {
@@ -117,54 +148,54 @@ export class WindLayer {
     window.removeEventListener("resize", this.updateViewerParameters.bind(this));
   }
 
-  private processWindData(windData: WindData): Required<WindData> {
-    if (windData.speed?.min === undefined || windData.speed?.max === undefined || windData.speed.array === undefined) {
+  private processFlowData(flowData: FlowData): Required<FlowData> {
+    if (flowData.speed?.min === undefined || flowData.speed?.max === undefined || flowData.speed.array === undefined) {
       const speed = {
-        array: new Float32Array(windData.u.array.length),
+        array: new Float32Array(flowData.u.array.length),
         min: Number.MAX_VALUE,
         max: Number.MIN_VALUE
       };
-      for (let i = 0; i < windData.u.array.length; i++) {
-        speed.array[i] = Math.sqrt(windData.u.array[i] * windData.u.array[i] + windData.v.array[i] * windData.v.array[i]);
+      for (let i = 0; i < flowData.u.array.length; i++) {
+        speed.array[i] = Math.sqrt(flowData.u.array[i] * flowData.u.array[i] + flowData.v.array[i] * flowData.v.array[i]);
         if (speed.array[i] !== 0) {
           speed.min = Math.min(speed.min, speed.array[i]);
           speed.max = Math.max(speed.max, speed.array[i]);
         }
       }
-      windData = { ...windData, speed };
+      flowData = { ...flowData, speed };
     }
 
     // If mask data is not provided, create a default mask with all areas valid (value = 1)
-    if (!windData.mask) {
+    if (!flowData.mask) {
       const mask = {
-        array: new Float32Array(windData.u.array.length).fill(1.0),
+        array: new Float32Array(flowData.u.array.length).fill(1.0),
         min: 1.0,
         max: 1.0
       };
-      windData = { ...windData, mask };
-    } else if (windData.mask.min === undefined || windData.mask.max === undefined) {
+      flowData = { ...flowData, mask };
+    } else if (flowData.mask.min === undefined || flowData.mask.max === undefined) {
       // Calculate min/max for provided mask data
       let min = Number.MAX_VALUE;
       let max = Number.MIN_VALUE;
-      for (let i = 0; i < windData.mask.array.length; i++) {
-        min = Math.min(min, windData.mask.array[i]);
-        max = Math.max(max, windData.mask.array[i]);
+      for (let i = 0; i < flowData.mask.array.length; i++) {
+        min = Math.min(min, flowData.mask.array[i]);
+        max = Math.max(max, flowData.mask.array[i]);
       }
-      windData.mask.min = min;
-      windData.mask.max = max;
+      flowData.mask.min = min;
+      flowData.mask.max = max;
     }
 
-    return windData as Required<WindData>;
+    return flowData as Required<FlowData>;
   }
 
   /**
-   * Get the wind data at a specific longitude and latitude.
+   * Get the flow data at a specific longitude and latitude.
    * @param {number} lon - The longitude.
    * @param {number} lat - The latitude.
    * @returns {Object} - An object containing the u, v, and speed values at the specified coordinates.
    */
-  getDataAtLonLat(lon: number, lat: number): WindDataAtLonLat | null {
-    const { bounds, width, height, u, v, speed } = this.windData;
+  getDataAtLonLat(lon: number, lat: number): FlowDataAtLonLat | null {
+    const { bounds, width, height, u, v, speed } = this.flowData;
     const { flipY } = this.options;
 
     // Check if the coordinates are within bounds
@@ -276,28 +307,28 @@ export class WindLayer {
     if (!isOutsideGlobe) { // -30 degrees in radians
       // Calculate intersection with data bounds
       const lonRange = new Cartesian2(
-        Math.max(this.windData.bounds.west, minLon),
-        Math.min(this.windData.bounds.east, maxLon)
+        Math.max(this.flowData.bounds.west, minLon),
+        Math.min(this.flowData.bounds.east, maxLon)
       );
       const latRange = new Cartesian2(
-        Math.max(this.windData.bounds.south, minLat),
-        Math.min(this.windData.bounds.north, maxLat)
+        Math.max(this.flowData.bounds.south, minLat),
+        Math.min(this.flowData.bounds.north, maxLat)
       );
 
       // Add 5% buffer to lonRange and latRange
       const lonBuffer = (lonRange.y - lonRange.x) * 0.05;
       const latBuffer = (latRange.y - latRange.x) * 0.05;
 
-      lonRange.x = Math.max(this.windData.bounds.west, lonRange.x - lonBuffer);
-      lonRange.y = Math.min(this.windData.bounds.east, lonRange.y + lonBuffer);
-      latRange.x = Math.max(this.windData.bounds.south, latRange.x - latBuffer);
-      latRange.y = Math.min(this.windData.bounds.north, latRange.y + latBuffer);
+      lonRange.x = Math.max(this.flowData.bounds.west, lonRange.x - lonBuffer);
+      lonRange.y = Math.min(this.flowData.bounds.east, lonRange.y + lonBuffer);
+      latRange.x = Math.max(this.flowData.bounds.south, latRange.x - latBuffer);
+      latRange.y = Math.min(this.flowData.bounds.north, latRange.y + latBuffer);
 
       this.viewerParameters.lonRange = lonRange;
       this.viewerParameters.latRange = latRange;
       // Calculate pixelSize based on the visible range
-      const dataLonRange = this.windData.bounds.east - this.windData.bounds.west;
-      const dataLatRange = this.windData.bounds.north - this.windData.bounds.south;
+      const dataLonRange = this.flowData.bounds.east - this.flowData.bounds.west;
+      const dataLatRange = this.flowData.bounds.north - this.flowData.bounds.south;
 
       // Calculate the ratio of visible area to total data area based on the shortest side
       const visibleRatioLon = (lonRange.y - lonRange.x) / dataLonRange;
@@ -317,23 +348,23 @@ export class WindLayer {
   }
 
   /**
-   * Update the wind data of the wind layer.
-   * @param {WindData} data - The new wind data to apply.
+   * Update the flow data of the flow layer.
+   * @param {FlowData} data - The new flow data to apply.
    */
-  updateWindData(data: WindData): void {
+  updateFlowData(data: FlowData): void {
     if (this._isDestroyed) return;
-    this.windData = this.processWindData(data);
-    this.particleSystem.computing.updateWindData(this.windData);
+    this.flowData = this.processFlowData(data);
+    this.particleSystem.computing.updateFlowData(this.flowData);
     this.viewer.scene.requestRender();
     // Dispatch data change event
-    this.dispatchEvent('dataChange', this.windData);
+    this.dispatchEvent('dataChange', this.flowData);
   }
 
   /**
-   * Update the options of the wind layer.
-   * @param {Partial<WindLayerOptions>} options - The new options to apply.
+   * Update the options of the flow layer.
+   * @param {Partial<FlowLayerOptions>} options - The new options to apply.
    */
-  updateOptions(options: Partial<WindLayerOptions>): void {
+  updateOptions(options: Partial<FlowLayerOptions>): void {
     if (this._isDestroyed) return;
     this.options = deepMerge(options, this.options);
     this.particleSystem.changeOptions(options);
@@ -343,16 +374,40 @@ export class WindLayer {
   }
 
   /**
-   * Zoom to the wind data bounds.
+   * Load and apply a mask from an image URL.
+   * @param {string} maskUrl - The URL of the mask image to load.
+   * @returns {Promise<void>} - Promise that resolves when the mask is loaded and applied.
+   */
+  async loadMaskFromUrl(maskUrl: string): Promise<void> {
+    if (this._isDestroyed) return;
+    
+    try {
+      const maskData = await fetchImageAsMask(maskUrl, this.flowData.width, this.flowData.height);
+      
+      // Update the current flow data with the new mask
+      const updatedFlowData: FlowData = {
+        ...this.flowData,
+        mask: maskData
+      };
+      
+      this.updateFlowData(updatedFlowData);
+    } catch (error) {
+      console.error('Failed to load mask from URL:', maskUrl, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Zoom to the flow data bounds.
    * @param {number} [duration=0] - The duration of the zoom animation.
    */
   zoomTo(duration: number = 0): void {
-    if (this.windData.bounds) {
+    if (this.flowData.bounds) {
       const rectangle = Rectangle.fromDegrees(
-        this.windData.bounds.west,
-        this.windData.bounds.south,
-        this.windData.bounds.east,
-        this.windData.bounds.north
+        this.flowData.bounds.west,
+        this.flowData.bounds.south,
+        this.flowData.bounds.east,
+        this.flowData.bounds.north
       );
       this.viewer.camera.flyTo({
         destination: rectangle,
@@ -362,7 +417,7 @@ export class WindLayer {
   }
 
   /**
-   * Add the wind layer to the scene.
+   * Add the flow layer to the scene.
    */
   add(): void {
     this.primitives = this.particleSystem.getPrimitives();
@@ -372,7 +427,7 @@ export class WindLayer {
   }
 
   /**
-   * Remove the wind layer from the scene.
+   * Remove the flow layer from the scene.
    */
   remove(): void {
     this.primitives.forEach(primitive => {
@@ -382,15 +437,15 @@ export class WindLayer {
   }
 
   /**
-   * Check if the wind layer is destroyed.
-   * @returns {boolean} - True if the wind layer is destroyed, otherwise false.
+   * Check if the flow layer is destroyed.
+   * @returns {boolean} - True if the flow layer is destroyed, otherwise false.
    */
   isDestroyed(): boolean {
     return this._isDestroyed;
   }
 
   /**
-   * Destroy the wind layer and release all resources.
+   * Destroy the flow layer and release all resources.
    */
   destroy(): void {
     this.remove();
@@ -410,10 +465,10 @@ export class WindLayer {
 
   /**
    * Add an event listener for the specified event type.
-   * @param {WindLayerEventType} type - The type of event to listen for.
-   * @param {WindLayerEventCallback} callback - The callback function to execute when the event occurs.
+   * @param {FlowLayerEventType} type - The type of event to listen for.
+   * @param {FlowLayerEventCallback} callback - The callback function to execute when the event occurs.
    */
-  addEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
+  addEventListener(type: FlowLayerEventType, callback: FlowLayerEventCallback) {
     if (!this.eventListeners.has(type)) {
       this.eventListeners.set(type, new Set());
     }
@@ -422,17 +477,18 @@ export class WindLayer {
 
   /**
    * Remove an event listener for the specified event type.
-   * @param {WindLayerEventType} type - The type of event to remove.
-   * @param {WindLayerEventCallback} callback - The callback function to remove.
+   * @param {FlowLayerEventType} type - The type of event to remove.
+   * @param {FlowLayerEventCallback} callback - The callback function to remove.
    */
-  removeEventListener(type: WindLayerEventType, callback: WindLayerEventCallback) {
+  removeEventListener(type: FlowLayerEventType, callback: FlowLayerEventCallback) {
     this.eventListeners.get(type)?.delete(callback);
   }
 
-  private dispatchEvent(type: WindLayerEventType, data: WindData | WindLayerOptions) {
+  private dispatchEvent(type: FlowLayerEventType, data: FlowData | FlowLayerOptions) {
     this.eventListeners.get(type)?.forEach(callback => callback(data));
   }
 
 }
 
-export type { WindLayerOptions, WindData, WindLayerEventType, WindLayerEventCallback };
+export type { FlowLayerOptions as FlowLayerOptions, FlowData as FlowData, FlowLayerEventType, FlowLayerEventCallback };
+export { fetchImageAsMask };
