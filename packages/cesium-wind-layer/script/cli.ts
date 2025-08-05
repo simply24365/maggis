@@ -5,6 +5,15 @@ import path from 'path';
 import sharp from 'sharp';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
+import proj4 from 'proj4';
+
+proj4.defs(
+  "EPSG:5186",
+  "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 "
+  +"+x_0=200000 +y_0=600000 "
+  +"+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 "
+  +"+units=m +no_defs +type=crs"
+);
 
 // =================================================================
 // SECTION 1: CENTRALIZED TYPES (No changes)
@@ -13,12 +22,12 @@ import { hideBin } from 'yargs/helpers';
 type VertexId = number;
 
 interface ProjectedBounds {
-  minX: number; maxX: number;
-  minY: number; maxY: number;
+  minLon: number; maxLon: number;
+  minLat: number; maxLat: number;
   minZ: number; maxZ: number;
 }
 
-interface Vertex { id: VertexId; x: number; y: number; z: number; }
+interface Vertex { id: VertexId; lon: number; lat: number; z: number; }
 interface Triangle { id: number; vertexIds: [VertexId, VertexId, VertexId]; }
 
 interface PolygonData {
@@ -81,8 +90,8 @@ class SpatialGrid {
         this.vertexMap = new Map(polygon.vertices.map(v => [v.id, v]));
         this.gridResolution = gridResolution;
         
-        this.cellWidth = (this.bounds.maxX - this.bounds.minX) / gridResolution;
-        this.cellHeight = (this.bounds.maxY - this.bounds.minY) / gridResolution;
+        this.cellWidth = (this.bounds.maxLon - this.bounds.minLon) / gridResolution;
+        this.cellHeight = (this.bounds.maxLat - this.bounds.minLat) / gridResolution;
 
         // 그리드 초기화
         this.grid = Array.from({ length: gridResolution }, () =>
@@ -101,17 +110,17 @@ class SpatialGrid {
             
             // 삼각형의 경계 상자 계산
             const triBounds = {
-                minX: Math.min(v1.x, v2.x, v3.x),
-                maxX: Math.max(v1.x, v2.x, v3.x),
-                minY: Math.min(v1.y, v2.y, v3.y),
-                maxY: Math.max(v1.y, v2.y, v3.y),
+                minLon: Math.min(v1.lon, v2.lon, v3.lon),
+                maxLon: Math.max(v1.lon, v2.lon, v3.lon),
+                minLat: Math.min(v1.lat, v2.lat, v3.lat),
+                maxLat: Math.max(v1.lat, v2.lat, v3.lat),
             };
 
             // 경계 상자가 겹치는 그리드 셀 찾기
-            const startCol = Math.floor((triBounds.minX - this.bounds.minX) / this.cellWidth);
-            const endCol = Math.floor((triBounds.maxX - this.bounds.minX) / this.cellWidth);
-            const startRow = Math.floor((triBounds.minY - this.bounds.minY) / this.cellHeight);
-            const endRow = Math.floor((triBounds.maxY - this.bounds.minY) / this.cellHeight);
+            const startCol = Math.floor((triBounds.minLon - this.bounds.minLon) / this.cellWidth);
+            const endCol = Math.floor((triBounds.maxLon - this.bounds.minLon) / this.cellWidth);
+            const startRow = Math.floor((triBounds.minLat - this.bounds.minLat) / this.cellHeight);
+            const endRow = Math.floor((triBounds.maxLat - this.bounds.minLat) / this.cellHeight);
             
             // 해당 셀에 삼각형 인덱스 추가
             for (let row = Math.max(0, startRow); row <= Math.min(this.gridResolution - 1, endRow); row++) {
@@ -123,13 +132,13 @@ class SpatialGrid {
     }
 
     /** 특정 좌표에 대한 후보 삼각형들의 인덱스를 반환합니다. */
-    public getCandidateTriangles(x: number, y: number): number[] {
-        if (x < this.bounds.minX || x > this.bounds.maxX || y < this.bounds.minY || y > this.bounds.maxY) {
+    public getCandidateTriangles(lon: number, lat: number): number[] {
+        if (lon < this.bounds.minLon || lon > this.bounds.maxLon || lat < this.bounds.minLat || lat > this.bounds.maxLat) {
             return [];
         }
 
-        const col = Math.floor((x - this.bounds.minX) / this.cellWidth);
-        const row = Math.floor((y - this.bounds.minY) / this.cellHeight);
+        const col = Math.floor((lon - this.bounds.minLon) / this.cellWidth);
+        const row = Math.floor((lat - this.bounds.minLat) / this.cellHeight);
         
         // 경계 값 처리
         const safeCol = Math.max(0, Math.min(this.gridResolution - 1, col));
@@ -144,8 +153,56 @@ class SpatialGrid {
 // SECTION 3: RAW FILE PARSERS (No changes)
 // =================================================================
 
-function calculateSpatialBounds(vertices: Vertex[]): ProjectedBounds { /* ... same as before ... */ return vertices.reduce((acc,v)=>({minX:Math.min(acc.minX,v.x),maxX:Math.max(acc.maxX,v.x),minY:Math.min(acc.minY,v.y),maxY:Math.max(acc.maxY,v.y),minZ:Math.min(acc.minZ,v.z),maxZ:Math.max(acc.maxZ,v.z)}),{minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity}); }
-function parsePolygonText(text: string): PolygonData { /* ... same as before ... */ const lines=text.trim().split(/\r?\n/),header=lines[0].trim().split(/\s+/);if(header.length<3)throw new Error("Malformed polygon header");const vertexCount=Number(header[1]),triangleCount=Number(header[2]),vertices:Vertex[]=[],triangles:Triangle[]=[];for(const line of lines.slice(1)){const parts=line.trim().split(/\s+/);if(parts.length<2)continue;const[type,...rest]=parts;if(type==="GN"&&rest.length>=4){const[idStr,xStr,yStr,zStr]=rest;vertices.push({id:Number(idStr),x:Number(xStr),y:Number(yStr),z:Number(zStr)})}else if(type==="GE"&&rest.length>=4){const[idStr,v1Str,v2Str,v3Str]=rest;triangles.push({id:Number(idStr),vertexIds:[Number(v1Str)as VertexId,Number(v2Str)as VertexId,Number(v3Str)as VertexId]})}}const bounds=calculateSpatialBounds(vertices);return{vertexCount,triangleCount,vertices,triangles,bounds}}
+function calculateSpatialBounds(vertices: Vertex[]): ProjectedBounds { 
+    return vertices.reduce((acc,v)=>({
+        minLon:Math.min(acc.minLon,v.lon),
+        maxLon:Math.max(acc.maxLon,v.lon),
+        minLat:Math.min(acc.minLat,v.lat),
+        maxLat:Math.max(acc.maxLat,v.lat),
+        minZ:Math.min(acc.minZ,v.z),
+        maxZ:Math.max(acc.maxZ,v.z)
+    }),{
+        minLon:Infinity,maxLon:-Infinity,
+        minLat:Infinity,maxLat:-Infinity,
+        minZ:Infinity,maxZ:-Infinity
+    }); 
+}
+function parsePolygonText(text: string): PolygonData {
+    const lines = text.trim().split(/\r?\n/);
+    const header = lines[0].trim().split(/\s+/);
+    if (header.length < 3) throw new Error("Malformed polygon header");
+    
+    const vertexCount = Number(header[1]);
+    const triangleCount = Number(header[2]);
+    const vertices: Vertex[] = [];
+    const triangles: Triangle[] = [];
+    
+    for (const line of lines.slice(1)) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 2) continue;
+        const [type, ...rest] = parts;
+        
+        if (type === "GN" && rest.length >= 4) {
+            const [idStr, xStr, yStr, zStr] = rest;
+            const [lon, lat] = proj4('EPSG:5186', 'EPSG:4326', [Number(xStr), Number(yStr)]);
+            vertices.push({
+                id: Number(idStr),
+                lon: lon,
+                lat: lat,
+                z: Number(zStr)
+            });
+        } else if (type === "GE" && rest.length >= 4) {
+            const [idStr, v1Str, v2Str, v3Str] = rest;
+            triangles.push({
+                id: Number(idStr),
+                vertexIds: [Number(v1Str) as VertexId, Number(v2Str) as VertexId, Number(v3Str) as VertexId]
+            });
+        }
+    }
+    
+    const bounds = calculateSpatialBounds(vertices);
+    return { vertexCount, triangleCount, vertices, triangles, bounds };
+}
 function parseTimeSeriesCsv(text: string): TimeSeriesData { /* ... same as before ... */ return text.trim().split("\n").slice(1).map(line=>{const trimmedLine=line.trim();if(!trimmedLine)return null;const[nodeId,timestamp,velocityX,velocityY,waterDepth,velocityMagnitude,waterElevation,inflowRate]=trimmedLine.split(",").map(Number);return{nodeId:nodeId as VertexId,timestamp,velocityX,velocityY,waterDepth,velocityMagnitude,waterElevation,inflowRate}}).filter((item):item is TimeSeriesRecord=>item!==null)}
 async function deserializePolygonFromFile(filePath: string): Promise<PolygonData> { const fileContent = await fs.readFile(filePath, 'utf-8'); return parsePolygonText(fileContent); }
 async function deserializeTimeSeriesFromFile(filePath: string): Promise<TimeSeriesData> { const fileContent = await fs.readFile(filePath, 'utf-8'); return parseTimeSeriesCsv(fileContent); }
@@ -155,7 +212,14 @@ async function deserializeTimeSeriesFromFile(filePath: string): Promise<TimeSeri
 // SECTION 4: CORE GENERATION LOGIC (Updated with SpatialGrid)
 // =================================================================
 
-function isPointInTriangle(px: number, py: number, v1: Vertex, v2: Vertex, v3: Vertex): boolean { /* ... same as before ... */ const d1=(px-v2.x)*(v1.y-v2.y)-(v1.x-v2.x)*(py-v2.y),d2=(px-v3.x)*(v2.y-v3.y)-(v2.x-v3.x)*(py-v3.y),d3=(px-v1.x)*(v3.y-v1.y)-(v3.x-v1.x)*(py-v1.y),has_neg=d1<0||d2<0||d3<0,has_pos=d1>0||d2>0||d3>0;return!(has_neg&&has_pos)}
+function isPointInTriangle(pLon: number, pLat: number, v1: Vertex, v2: Vertex, v3: Vertex): boolean {
+    const d1 = (pLon - v2.lon) * (v1.lat - v2.lat) - (v1.lon - v2.lon) * (pLat - v2.lat);
+    const d2 = (pLon - v3.lon) * (v2.lat - v3.lat) - (v2.lon - v3.lon) * (pLat - v3.lat);
+    const d3 = (pLon - v1.lon) * (v3.lat - v1.lat) - (v3.lon - v1.lon) * (pLat - v1.lat);
+    const has_neg = d1 < 0 || d2 < 0 || d3 < 0;
+    const has_pos = d1 > 0 || d2 > 0 || d3 > 0;
+    return !(has_neg && has_pos);
+}
 
 /** 폴리곤 영역을 나타내는 흑백 마스크 PNG를 생성합니다. (가속화 적용) */
 async function generatePolygonMaskPng(polygon: PolygonData, size: number, grid: SpatialGrid): Promise<Buffer> {
@@ -165,17 +229,17 @@ async function generatePolygonMaskPng(polygon: PolygonData, size: number, grid: 
 
     for (let j = 0; j < size; j++) {
         for (let i = 0; i < size; i++) {
-            const x = bounds.minX + (i / (size - 1)) * (bounds.maxX - bounds.minX);
-            const y = bounds.minY + (j / (size - 1)) * (bounds.maxY - bounds.minY);
+            const lon = bounds.minLon + (i / (size - 1)) * (bounds.maxLon - bounds.minLon);
+            const lat = bounds.minLat + (j / (size - 1)) * (bounds.maxLat - bounds.minLat);
 
-            const candidateIndices = grid.getCandidateTriangles(x, y);
+            const candidateIndices = grid.getCandidateTriangles(lon, lat);
             let isInside = false;
             for (const triIndex of candidateIndices) {
                 const tri = triangles[triIndex];
                 const v1 = vertexMap.get(tri.vertexIds[0])!;
                 const v2 = vertexMap.get(tri.vertexIds[1])!;
                 const v3 = vertexMap.get(tri.vertexIds[2])!;
-                if (isPointInTriangle(x, y, v1, v2, v3)) {
+                if (isPointInTriangle(lon, lat, v1, v2, v3)) {
                     isInside = true;
                     break;
                 }
@@ -295,12 +359,12 @@ async function generateFlowDataFromTimeSeries(
     // Generate velocity field for each pixel
     for (let j = 0; j < size; j++) {
         for (let i = 0; i < size; i++) {
-            const x = bounds.minX + (i / (size - 1)) * (bounds.maxX - bounds.minX);
-            const y = bounds.minY + (j / (size - 1)) * (bounds.maxY - bounds.minY);
+            const lon = bounds.minLon + (i / (size - 1)) * (bounds.maxLon - bounds.minLon);
+            const lat = bounds.minLat + (j / (size - 1)) * (bounds.maxLat - bounds.minLat);
             const arrayIndex = j * size + i;
 
             let interpolated: { vx: number, vy: number } | null = null;
-            const candidateIndices = grid.getCandidateTriangles(x, y);
+            const candidateIndices = grid.getCandidateTriangles(lon, lat);
 
             // Find triangle containing this point and interpolate velocity
             for (const triIndex of candidateIndices) {
@@ -309,7 +373,7 @@ async function generateFlowDataFromTimeSeries(
                 const v2 = vertexMap.get(tri.vertexIds[1])!;
                 const v3 = vertexMap.get(tri.vertexIds[2])!;
 
-                if (isPointInTriangle(x, y, v1, v2, v3)) {
+                if (isPointInTriangle(lon, lat, v1, v2, v3)) {
                     // Get velocity data for triangle vertices
                     const vel1 = velocityMap.get(tri.vertexIds[0]);
                     const vel2 = velocityMap.get(tri.vertexIds[1]);
@@ -317,10 +381,10 @@ async function generateFlowDataFromTimeSeries(
 
                     if (vel1 && vel2 && vel3) {
                         // Perform barycentric interpolation
-                        const denom = (v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y);
+                        const denom = (v2.lat - v3.lat) * (v1.lon - v3.lon) + (v3.lon - v2.lon) * (v1.lat - v3.lat);
                         if (Math.abs(denom) > 1e-10) {
-                            const w1 = ((v2.y - v3.y) * (x - v3.x) + (v3.x - v2.x) * (y - v3.y)) / denom;
-                            const w2 = ((v3.y - v1.y) * (x - v3.x) + (v1.x - v3.x) * (y - v3.y)) / denom;
+                            const w1 = ((v2.lat - v3.lat) * (lon - v3.lon) + (v3.lon - v2.lon) * (lat - v3.lat)) / denom;
+                            const w2 = ((v3.lat - v1.lat) * (lon - v3.lon) + (v1.lon - v3.lon) * (lat - v3.lat)) / denom;
                             const w3 = 1 - w1 - w2;
 
                             interpolated = {
@@ -381,10 +445,10 @@ async function generateFlowDataFromTimeSeries(
         width: size,
         height: size,
         bounds: {
-            west: bounds.minX,
-            south: bounds.minY,
-            east: bounds.maxX,
-            north: bounds.maxY
+            west: bounds.minLon,
+            south: bounds.minLat,
+            east: bounds.maxLon,
+            north: bounds.maxLat
         }
     };
 
