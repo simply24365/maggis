@@ -87,26 +87,16 @@ export function Earth() {
     
     const initFlowLayer = async () => {
       try {
-        const res = await fetch('/wind.json');
-        const data = await res.json();
+        const res = await fetch('/river-data/velocity/20250724/flow_1.json');
+        const flowData: FlowData = await res.json();
 
         if (!isComponentMounted || !viewerRef.current) return;
-
-        const flowData: FlowData = {
-          ...data,
-          bounds: {
-            west: data.bbox[0],
-            south: data.bbox[1],
-            east: data.bbox[2],
-            north: data.bbox[3],
-          }
-        };
 
         // Apply initial options with flow configuration and mask URL
         const initialOptions = {
           ...defaultOptions,
           ...dataConfigs.wind.options,
-          maskUrl: '/river-data/mask.png'  // Let FlowLayer load the mask automatically
+          // maskUrl: '/river-data/mask.png'  // Let FlowLayer load the mask automatically
         };
 
         if (isFirstLoadRef.current && flowData.bounds) {
@@ -116,6 +106,8 @@ export function Earth() {
             flowData.bounds.east,
             flowData.bounds.north
           );
+          console.log(rectangle);
+          
           viewerRef.current.camera.flyTo({
             destination: rectangle,
             duration: 0,
