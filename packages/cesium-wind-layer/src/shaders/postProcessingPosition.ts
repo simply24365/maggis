@@ -57,13 +57,13 @@ void main() {
     float speedNorm = nextSpeed.a;
     float particleDropRate = dropRate + dropRateBump * speedNorm;
 
-    vec2 seed1 = nextParticle.xy + v_textureCoordinates;
-    vec2 seed2 = nextSpeed.rg + v_textureCoordinates;
-    vec2 randomParticle = generateRandomParticle(seed1);
-    float randomNumber = rand(seed2, normalRange);
+    vec2 seed = nextParticle.xy + v_textureCoordinates;
+    float randomNumber = rand(seed, normalRange);
 
     if (randomNumber < particleDropRate || particleOutbound(nextParticle)) {
-        fragColor = vec4(randomParticle, 0.0, 1.0); // 1.0 means this is a random particle
+        // 리셋이 필요하다고 플래그만 남김 (alpha = 1.0)
+        // 실제 새로운 위치 생성은 maskCheck 셰이더에 위임
+        fragColor = vec4(nextParticle, 0.0, 1.0);
     } else {
         fragColor = vec4(nextParticle, 0.0, 0.0);
     }

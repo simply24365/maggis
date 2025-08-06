@@ -95,22 +95,27 @@ void main() {
     vec2 particleIndex = flippedIndex;
     speed = texture(particlesSpeed, particleIndex);
 
-    vec2 previousPosition = texture(previousParticlesPosition, particleIndex).rg;
-    vec2 currentPosition = texture(currentParticlesPosition, particleIndex).rg;
-    vec2 nextPosition = texture(postProcessingPosition, particleIndex).rg;
+    vec4 previousData = texture(previousParticlesPosition, particleIndex);
+    vec4 currentData = texture(currentParticlesPosition, particleIndex);
+    
+    vec2 previousPosition = previousData.rg;
+    vec2 currentPosition = currentData.rg;
 
-    float isAnyRandomPointUsed = texture(postProcessingPosition, particleIndex).a +
-        texture(currentParticlesPosition, particleIndex).a +
-        texture(previousParticlesPosition, particleIndex).a;
+    // 가장 정확한 최신 리셋 정보는 currentParticlesPosition.a에 저장되어 있음
+    // maskCheck 셰이더가 최종 처리한 결과가 핑퐁으로 currentParticlesPosition이 됨
+    bool isParticleReset = currentData.a > 0.0;
 
     adjacentPoints projectedCoordinates;
-    if (isAnyRandomPointUsed > 0.0) {
-        projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
+    if (isParticleReset) {
+        // 파티클이 리셋되었다면, 모든 좌표를 새로운 시작점(currentPosition)으로 통일
+        projectedCoordinates.previous = calculateProjectedCoordinate(currentPosition);
         projectedCoordinates.current = projectedCoordinates.previous;
         projectedCoordinates.next = projectedCoordinates.previous;
     } else {
         projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
         projectedCoordinates.current = calculateProjectedCoordinate(currentPosition);
+        // 다음 위치는 현재 위치에서 속도만큼 나아간 지점으로 추정
+        vec2 nextPosition = currentPosition + speed.rg;
         projectedCoordinates.next = calculateProjectedCoordinate(nextPosition);
     }
 
@@ -124,13 +129,16 @@ void main() {
     
     // 根据速度计算宽度
     float widthFactor = mix(lineWidth.x, lineWidth.y, normalizedSpeed);
-    widthFactor *= (pointToUse < 0 ? 1.0 : 0.5); // 头部更宽，尾部更窄
+    
+    // [개선] 머리(1.0)가 꼬리(0.7)보다 넓도록 하여 유선형 모양 생성
+    // pointToUse > 0 은 머리 부분, pointToUse < 0 은 꼬리 부분
+    widthFactor *= (pointToUse > 0 ? 1.0 : 0.7);
 
     // Calculate length based on speed
     float lengthFactor = mix(lineLength.x, lineLength.y, normalizedSpeed) * pixelSize;
 
     if (pointToUse == 1) {
-        // 头部位置
+        // 머리 부분 (previous -> current 방향)
         offset = pixelSize * calculateOffsetOnNormalDirection(
             projectedCoordinates.previous,
             projectedCoordinates.current,
@@ -138,9 +146,9 @@ void main() {
             widthFactor
         );
         gl_Position = projectedCoordinates.previous + offset;
-        v_segmentPosition = 0.0; // 头部
+        v_segmentPosition = 0.0; // 머리는 0.0
     } else if (pointToUse == -1) {
-        // Get direction and normalize it to length 1.0
+        // 꼬리 부분 (current -> next 방향으로 연장)
         vec4 direction = normalize(projectedCoordinates.next - projectedCoordinates.current);
         vec4 extendedPosition = projectedCoordinates.current + direction * lengthFactor;
 
@@ -151,7 +159,7 @@ void main() {
             widthFactor
         );
         gl_Position = extendedPosition + offset;
-        v_segmentPosition = 1.0; // 尾部
+        v_segmentPosition = 1.0; // 꼬리는 1.0
     }
 
     textureCoordinate = st;
@@ -179,12 +187,12 @@ void main() {
         float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
         vec4 baseColor = texture(colorTable, vec2(normalizedSpeed, zero));
 
-        // 使用更平滑的渐变效果
-        float alpha = smoothstep(0.0, 1.0, v_segmentPosition);
-        alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
+        // [개선] 파티클이 머리(0.0)에서 꼬리(1.0)로 갈수록 흐려지도록 수정 (fade-out 효과)
+        float alpha = 1.0 - v_segmentPosition;
+        alpha = pow(alpha, 1.5); // 꼬리 부분의 투명도를 더 급격하게 만들어 뾰족한 느낌을 줌
 
-        // 根据速度调整透明度
-        float speedAlpha = mix(0.3, 1.0, speed.a);
+        // 속도가 빠를수록 더 진하게 보이도록 조정
+        float speedAlpha = mix(0.4, 1.0, normalizedSpeed);
 
         // 组合颜色和透明度
         fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha);

@@ -186,6 +186,7 @@ export class FlowParticlesComputing {
           particlesSpeed: () => this.particlesTextures.particlesSpeed,
         },
         fragmentShaderSource: ShaderManager.getUpdatePositionShader(),
+        // 1단계: 계산된 다음 위치를 'nextParticlesPosition' 텍스처에 저장
         outputTexture: this.particlesTextures.nextParticlesPosition,
         preExecute: () => {
           if (this.primitives.updatePosition.commandToExecute) {
@@ -236,6 +237,7 @@ export class FlowParticlesComputing {
           }
         },
         fragmentShaderSource: ShaderManager.getMaskCheckShader(),
+        // 3단계: 마스크 검사까지 마친 최종 위치를 'nextParticlesPosition'에 기록
         outputTexture: this.particlesTextures.nextParticlesPosition,
         preExecute: () => {
           if (this.primitives.maskCheck.commandToExecute) {

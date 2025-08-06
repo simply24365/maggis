@@ -77,19 +77,22 @@ vec2 generateValidRandomParticle(vec2 seed) {
 out vec4 fragColor;
 
 void main() {
-    vec2 currentPosition = texture(currentParticlesPosition, v_textureCoordinates).rg;
+    vec4 particleData = texture(currentParticlesPosition, v_textureCoordinates);
+    vec2 currentPosition = particleData.rg;
+    float isResetFromPreviousPass = particleData.a;
     
     // Check if current position is in a masked area
     float maskValue = getMaskValue(currentPosition);
     
-    if (maskValue < 0.5) { // Particle is in blocked area (mask value < 0.5)
+    if (isResetFromPreviousPass > 0.0 || maskValue < 0.5) {
+        // Particle was reset in previous pass OR is in blocked area
         // Generate new valid random position
         vec2 seed = currentPosition + v_textureCoordinates;
         vec2 newPosition = generateValidRandomParticle(seed);
         fragColor = vec4(newPosition, 0.0, 1.0); // 1.0 indicates this is a reset particle
     } else {
         // Particle is in valid area, keep current position
-        fragColor = vec4(currentPosition, 0.0, 0.0);
+        fragColor = vec4(currentPosition, 0.0, 0.0); // 0.0 indicates normal particle
     }
 }
 `;

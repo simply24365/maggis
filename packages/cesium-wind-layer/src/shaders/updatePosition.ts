@@ -16,7 +16,7 @@ void main() {
     // 计算下一个位置
     vec2 nextPos = currentPos + speed;
     
-    // 将新的位置写入 fragColor
-    fragColor = vec4(nextPos, 0.0, 1.0);
+    // alpha 값은 0.0으로 유지하여 다음 단계로 전달
+    fragColor = vec4(nextPos, 0.0, 0.0);
 }
 `;

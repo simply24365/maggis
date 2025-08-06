@@ -94,7 +94,7 @@ const setupGUI = (flowLayer: FlowLayer) => {
   
   // Line Properties
   const lineFolder = gui.addFolder('Line Properties');
-  lineFolder.add(options.lineWidth, 'min', 0.001, 1, 0.01)
+  lineFolder.add(options.lineWidth, 'min', 0.001, 10, 0.01)
     .name('Min Line Width')
     .onChange((value: number) => {
       flowLayer.updateOptions({ 
@@ -102,7 +102,7 @@ const setupGUI = (flowLayer: FlowLayer) => {
       });
     });
   
-  lineFolder.add(options.lineWidth, 'max', 0.001, 1, 0.01)
+  lineFolder.add(options.lineWidth, 'max', 0.001, 10, 0.01)
     .name('Max Line Width')
     .onChange((value: number) => {
       flowLayer.updateOptions({ 
@@ -110,7 +110,7 @@ const setupGUI = (flowLayer: FlowLayer) => {
       });
     });
   
-  lineFolder.add(options.lineLength, 'min', 0.001, 1, 0.01)
+  lineFolder.add(options.lineLength, 'min', 0.001, 10, 0.01)
     .name('Min Line Length')
     .onChange((value: number) => {
       flowLayer.updateOptions({ 
@@ -118,7 +118,7 @@ const setupGUI = (flowLayer: FlowLayer) => {
       });
     });
   
-  lineFolder.add(options.lineLength, 'max', 0.001, 1, 0.01)
+  lineFolder.add(options.lineLength, 'max', 0.001, 10, 0.01)
     .name('Max Line Length')
     .onChange((value: number) => {
       flowLayer.updateOptions({ 
@@ -278,7 +278,7 @@ export function Earth() {
         const initialOptions = {
           ...defaultOptions,
           ...dataConfigs.wind.options,
-          // maskUrl: '/river-data/mask.png'  // Let FlowLayer load the mask automatically
+          maskUrl: '/river-data/mask.png'
         };
 
         if (isFirstLoadRef.current && flowData.bounds) {
