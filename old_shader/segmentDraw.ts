@@ -95,27 +95,22 @@ void main() {
     vec2 particleIndex = flippedIndex;
     speed = texture(particlesSpeed, particleIndex);
 
-    vec4 previousData = texture(previousParticlesPosition, particleIndex);
-    vec4 currentData = texture(currentParticlesPosition, particleIndex);
-    
-    vec2 previousPosition = previousData.rg;
-    vec2 currentPosition = currentData.rg;
+    vec2 previousPosition = texture(previousParticlesPosition, particleIndex).rg;
+    vec2 currentPosition = texture(currentParticlesPosition, particleIndex).rg;
+    vec2 nextPosition = texture(postProcessingPosition, particleIndex).rg;
 
-    // 가장 정확한 최신 리셋 정보는 currentParticlesPosition.a에 저장되어 있음
-    // maskCheck 셰이더가 최종 처리한 결과가 핑퐁으로 currentParticlesPosition이 됨
-    bool isParticleReset = currentData.a > 0.0;
+    float isAnyRandomPointUsed = texture(postProcessingPosition, particleIndex).a +
+        texture(currentParticlesPosition, particleIndex).a +
+        texture(previousParticlesPosition, particleIndex).a;
 
     adjacentPoints projectedCoordinates;
-    if (isParticleReset) {
-        // 파티클이 리셋되었다면, 모든 좌표를 새로운 시작점(currentPosition)으로 통일
-        projectedCoordinates.previous = calculateProjectedCoordinate(currentPosition);
+    if (isAnyRandomPointUsed > 0.0) {
+        projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
         projectedCoordinates.current = projectedCoordinates.previous;
         projectedCoordinates.next = projectedCoordinates.previous;
     } else {
         projectedCoordinates.previous = calculateProjectedCoordinate(previousPosition);
         projectedCoordinates.current = calculateProjectedCoordinate(currentPosition);
-        // 다음 위치는 현재 위치에서 속도만큼 나아간 지점으로 추정
-        vec2 nextPosition = currentPosition + speed.rg * 10.;
         projectedCoordinates.next = calculateProjectedCoordinate(nextPosition);
     }
 

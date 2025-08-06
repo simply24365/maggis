@@ -26,12 +26,16 @@ const dataConfigs = {
     options: {
       domain: {
         min: 0,
-        max: 1,
+        max: 0.02,
       },
-      speedFactor: 5,
-      lineWidth: { min: 0.1, max: 1 },
-      lineLength: { min: 0.1, max: 1 },
+      speedFactor: 1,
+      
+      // lineWidth: { min: 1, max: 3 }, // 좁은 지역이므로 선 굵기 변화를 줌
+      // lineLength: { min: 5, max: 15 }, // 좁은 지역에 맞게 파티클 길이를 줄임
       particleHeight: 100,
+      
+      lineLength: { min: 0.1, max: 0.3 },
+      lineWidth: { min: 0.1, max: 0.2 },
     },
   }
 };
