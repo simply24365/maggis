@@ -14,6 +14,7 @@
     "cesium": "^1.122.0",
     "cesium-wind-layer": "workspace:*",
     "d3-scale-chromatic": "^3.1.0",
+    "lil-gui": "^0.20.0",
     "proj4": "^2.19.10",
     "rbush": "^4.0.1",
     "react": "^18.3.1",

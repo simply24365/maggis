@@ -51,7 +51,7 @@ interface TimeSeriesRecord {
 type TimeSeriesData = TimeSeriesRecord[];
 
 interface ArrayWithMinMax {
-  array: Float32Array;
+  array: number[];
   min?: number;
   max?: number;
 }
@@ -275,6 +275,44 @@ async function handleMaskTexture(argv: any) {
     console.log(`🎉 마스크 텍스처가 ${outputPath}에 저장되었습니다.`);
 }
 
+async function handleGenerateFlowJson(argv: any) {
+    const { inputFile, textureSize = 1024, outputFile, polygonPath } = argv;
+    console.log(`🌊 단일 시점 FlowData JSON 생성을 시작합니다...`);
+    console.log(`   - 입력 파일: ${inputFile}`);
+    console.log(`   - 텍스처 크기: ${textureSize}x${textureSize}`);
+    console.log(`   - 출력 파일: ${outputFile}`);
+    console.log(`   - 폴리곤 파일: ${polygonPath}`);
+
+    try {
+        // Load polygon data from specified path
+        const polygon = await deserializePolygonFromFile(polygonPath);
+        console.log(`   - 폴리곤 데이터 로드 완료`);
+
+        // Load time series data
+        const timeSeriesData = await deserializeTimeSeriesFromFile(inputFile);
+        console.log(`   - 시계열 데이터 로드 완료 (${timeSeriesData.length}개 레코드)`);
+
+        // Create spatial grid for acceleration
+        const grid = new SpatialGrid(polygon);
+
+        // Generate velocity field
+        const flowData = await generateFlowDataFromTimeSeries(
+            polygon, 
+            timeSeriesData, 
+            textureSize, 
+            grid
+        );
+
+        // Save FlowData JSON
+        await fs.writeFile(outputFile, JSON.stringify(flowData, null, 2));
+        console.log(`🎉 FlowData JSON 파일이 ${outputFile}에 저장되었습니다!`);
+
+    } catch (error: any) {
+        console.error(`❌ 오류 발생: ${error.message}`);
+        process.exit(1);
+    }
+}
+
 async function handleGenerateFlowJsonAllTime(argv: any) {
     const { inputDir, textureSize = 1024, outputDir = inputDir, polygonPath } = argv;
     console.log(`🌊 모든 시계열에 대한 FlowData JSON 생성을 시작합니다...`);
@@ -428,17 +466,17 @@ async function generateFlowDataFromTimeSeries(
     // Create FlowData object
     const flowData: FlowData = {
         u: {
-            array: uArray,
+            array: Array.from(uArray),
             min: uMin,
             max: uMax
         },
         v: {
-            array: vArray,
+            array: Array.from(vArray),
             min: vMin,
             max: vMax
         },
         speed: {
-            array: speedArray,
+            array: Array.from(speedArray),
             min: speedMin,
             max: speedMax
         },
@@ -480,6 +518,32 @@ yargs(hideBin(process.argv))
         describe: '텍스처 크기 (픽셀)'
       }),
     handleMaskTexture
+  )
+  .command(
+    'generate-flow-json',
+    '단일 시점에 대한 FlowData JSON 파일을 생성합니다',
+    (y) => y
+      .option('input-file', {
+        type: 'string',
+        demandOption: true,
+        describe: 'CSV 파일 경로'
+      })
+      .option('polygon-path', {
+        type: 'string',
+        demandOption: true,
+        describe: '폴리곤 파일(.raw) 경로'
+      })
+      .option('texture-size', {
+        type: 'number',
+        default: 1024,
+        describe: '텍스처 크기 (픽셀, 기본값: 1024)'
+      })
+      .option('output-file', {
+        type: 'string',
+        demandOption: true,
+        describe: '출력 JSON 파일 경로'
+      }),
+    handleGenerateFlowJson
   )
   .command(
     'generate-flow-json-all-time',
