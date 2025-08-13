@@ -2,6 +2,7 @@ import {
   Viewer,
   Scene,
   Cartesian2,
+  Cartesian3,
   SceneMode,
   Math as CesiumMath,
   Rectangle
@@ -60,6 +61,10 @@ export class FlowLayer {
     latRange: Cartesian2;
     pixelSize: number;
     sceneMode: SceneMode;
+    cameraPosition: Cartesian3;
+    cameraDirection: Cartesian3;
+    cameraUp: Cartesian3;
+    cameraDistance: number;
   };
   private _isDestroyed: boolean = false;
   private primitives: any[] = [];
@@ -98,7 +103,11 @@ export class FlowLayer {
       lonRange: new Cartesian2(-180, 180),
       latRange: new Cartesian2(-90, 90),
       pixelSize: 1000.0,
-      sceneMode: this.scene.mode
+      sceneMode: this.scene.mode,
+      cameraPosition: Cartesian3.ZERO,
+      cameraDirection: Cartesian3.UNIT_Z,
+      cameraUp: Cartesian3.UNIT_Y,
+      cameraDistance: 0
     };
     this.updateViewerParameters();
     
@@ -342,6 +351,15 @@ export class FlowLayer {
       }
     }
 
+    // 카메라 정보 추가
+    const camera = this.viewer.camera;
+    this.viewerParameters.cameraPosition = camera.position;
+    this.viewerParameters.cameraDirection = camera.direction;
+    this.viewerParameters.cameraUp = camera.up;
+    
+    // 카메라와 지구 중심 간의 거리 계산
+    const earthCenter = Cartesian3.ZERO;
+    this.viewerParameters.cameraDistance = Cartesian3.distance(camera.position, earthCenter);
 
     this.viewerParameters.sceneMode = this.scene.mode;
     this.particleSystem?.applyViewerParameters(this.viewerParameters);

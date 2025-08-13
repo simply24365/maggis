@@ -17,6 +17,10 @@ uniform vec2 lineWidth;
 uniform vec2 lineLength;
 uniform vec2 domain;
 uniform bool is3D;
+uniform vec3 cameraPosition;
+uniform vec3 cameraDirection;
+uniform vec3 cameraUp;
+uniform float cameraDistance;
 
 // 添加输出变量传递给片元着色器
 out vec4 speed;
@@ -80,8 +84,30 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
     vec2 normalVector = vec2(-direction.y, direction.x);
     normalVector.x = normalVector.x / aspect;
 
-    // 使用 widthFactor 调整宽度
-    float offsetLength = widthFactor * lineWidth.y;
+    // 카메라 각도에 따른 적응적 두께 조정
+    float viewAngleFactor = 1.0;
+    if (is3D) {
+        // 3D 모드에서 카메라 뷰와 파티클 방향의 관계 계산
+        vec2 screenDirection = normalize(pointB_XY - pointA_XY);
+        
+        // 정면에서 볼 때(screenDirection가 짧거나 거의 0에 가까울 때) 더 두껍게
+        float directionLength = length(pointB_XY - pointA_XY);
+        
+        // 방향의 길이가 짧을수록(정면에서 볼 때) 더 두껍게
+        // 방향의 길이가 길수록(측면에서 볼 때) 상대적으로 얇게
+        float lengthFactor = clamp(directionLength, 0.01, 1.0);
+        viewAngleFactor = mix(3.0, 1.0, lengthFactor); // 정면일 때 3배, 측면일 때 1배
+        
+        // 카메라 거리에 따른 추가 스케일 조정
+        float distanceFactor = clamp(cameraDistance / 10000000.0, 0.8, 2.5);
+        viewAngleFactor *= distanceFactor;
+        
+        // 최소/최대 두께 제한
+        viewAngleFactor = clamp(viewAngleFactor, 0.5, 4.0);
+    }
+
+    // 使用 widthFactor와 viewAngleFactor 조정宽度
+    float offsetLength = widthFactor * lineWidth.y * viewAngleFactor;
     normalVector = offsetLength * normalVector;
 
     vec4 offset = vec4(offsetSign * normalVector, 0.0, 0.0);
@@ -131,8 +157,16 @@ void main() {
     float widthFactor = mix(lineWidth.x, lineWidth.y, normalizedSpeed);
     widthFactor *= (pointToUse < 0 ? 1.0 : 0.5); // 头部更宽，尾部更窄
 
-    // Calculate length based on speed
+    // 카메라 거리와 각도를 고려한 길이 계산
     float lengthFactor = mix(lineLength.x, lineLength.y, normalizedSpeed) * pixelSize;
+    if (is3D) {
+        // 카메라 거리에 따른 길이 조정
+        float distanceScale = clamp(cameraDistance / 10000000.0, 0.3, 2.0);
+        lengthFactor *= distanceScale;
+        
+        // 속도가 높을수록 더 긴 꼬리
+        lengthFactor *= (1.0 + normalizedSpeed * 0.5);
+    }
 
     if (pointToUse == 1) {
         // 头部位置
@@ -174,6 +208,8 @@ uniform vec2 domain;
 uniform vec2 displayRange;
 uniform sampler2D colorTable;
 uniform sampler2D segmentsDepthTexture;
+uniform float cameraDistance;
+uniform bool is3D;
 
 out vec4 fragColor;
 
@@ -189,10 +225,17 @@ void main() {
         alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
 
         // 根据速度调整透明度
-        float speedAlpha = mix(0.3, 1.0, speed.a);
+        float speedAlpha = mix(0.4, 1.0, speed.a);
+        
+        // 카메라 거리에 따른 알파 조정 (더 멀리 있을 때 더 선명하게)
+        float cameraAlpha = 1.0;
+        if (is3D) {
+            float distanceNormalized = clamp(cameraDistance / 20000000.0, 0.0, 1.0);
+            cameraAlpha = mix(0.6, 1.0, distanceNormalized); // 가까이서는 0.6, 멀리서는 1.0
+        }
 
         // 组合颜色和透明度
-        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha);
+        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha * cameraAlpha);
     } else {
         fragColor = vec4(zero);
     }
