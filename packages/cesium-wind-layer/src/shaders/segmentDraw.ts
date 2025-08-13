@@ -72,41 +72,82 @@ vec4 calculateProjectedCoordinate(vec2 lonLat) {
     }
 }
 
-vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign, float widthFactor) {
+vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign, float widthFactor, vec2 previousPosition, vec2 currentPosition) {
     vec2 aspectVec2 = vec2(aspect, 1.0);
     vec2 pointA_XY = (pointA.xy / pointA.w) * aspectVec2;
     vec2 pointB_XY = (pointB.xy / pointB.w) * aspectVec2;
 
-    // 计算方向向量
+    // 계산 방향벡터
     vec2 direction = normalize(pointB_XY - pointA_XY);
 
-    // 计算法向量
-    vec2 normalVector = vec2(-direction.y, direction.x);
-    normalVector.x = normalVector.x / aspect;
-
-    // 카메라 각도에 따른 적응적 두께 조정
+    // 카메라 시선 방향을 고려한 법선 벡터 계산
+    vec2 normalVector;
     float viewAngleFactor = 1.0;
+    
     if (is3D) {
-        // 3D 모드에서 카메라 뷰와 파티클 방향의 관계 계산
-        vec2 screenDirection = normalize(pointB_XY - pointA_XY);
+        // 3D 모드에서는 카메라 방향을 고려한 빌보드 효과 적용
+        vec3 worldPointA = convertCoordinate(previousPosition);
+        vec3 worldPointB = convertCoordinate(currentPosition);
+        vec3 particleDirection = normalize(worldPointB - worldPointA);
         
-        // 정면에서 볼 때(screenDirection가 짧거나 거의 0에 가까울 때) 더 두껍게
-        float directionLength = length(pointB_XY - pointA_XY);
+        // 카메라에서 파티클로의 방향
+        vec3 viewDirection = normalize(worldPointA - cameraPosition);
         
-        // 방향의 길이가 짧을수록(정면에서 볼 때) 더 두껍게
-        // 방향의 길이가 길수록(측면에서 볼 때) 상대적으로 얇게
-        float lengthFactor = clamp(directionLength, 0.01, 1.0);
-        viewAngleFactor = mix(3.0, 1.0, lengthFactor); // 정면일 때 3배, 측면일 때 1배
+        // 파티클 방향과 카메라 시선에 수직인 벡터 계산 (빌보드 효과)
+        vec3 rightVector = cross(particleDirection, viewDirection);
+        float rightLength = length(rightVector);
+        
+        // cross product가 0에 가까울 때 (정면/후면에서 볼 때) 대체 벡터 사용
+        if (rightLength < 0.001) {
+            // 카메라의 up 벡터를 사용하여 대체 right 벡터 생성
+            rightVector = normalize(cross(particleDirection, cameraUp));
+            rightLength = length(rightVector);
+            
+            // 그래도 문제가 있다면 임의의 벡터 사용
+            if (rightLength < 0.001) {
+                rightVector = vec3(1.0, 0.0, 0.0);
+            }
+        } else {
+            rightVector = rightVector / rightLength;
+        }
+        
+        // 월드 좌표의 right 벡터를 스크린 좌표로 변환
+        vec4 rightWorld4 = vec4(worldPointA + rightVector * 1000.0, 1.0);
+        vec4 centerWorld4 = vec4(worldPointA, 1.0);
+        vec4 rightScreen = czm_modelViewProjection * rightWorld4;
+        vec4 centerScreen = czm_modelViewProjection * centerWorld4;
+        
+        vec2 rightScreenXY = (rightScreen.xy / rightScreen.w) * aspectVec2;
+        vec2 centerScreenXY = (centerScreen.xy / centerScreen.w) * aspectVec2;
+        normalVector = normalize(rightScreenXY - centerScreenXY);
+        normalVector.x = normalVector.x / aspect;
+        
+        // 파티클이 카메라를 향하는 정도에 따른 두께 조정
+        float facingFactor = abs(dot(particleDirection, viewDirection));
+        
+        // 파티클이 카메라에 평행할 때 (정면/후면에서 볼 때) 더 두껍게
+        // 파티클이 카메라에 수직일 때 (측면에서 볼 때) 상대적으로 얇게
+        // facingFactor가 1에 가까울 때 = 정면, 0에 가까울 때 = 측면
+        viewAngleFactor = mix(0.8, 2.5, facingFactor); // 측면에서 0.8배, 정면에서 2.5배
         
         // 카메라 거리에 따른 추가 스케일 조정
-        float distanceFactor = clamp(cameraDistance / 10000000.0, 0.8, 2.5);
+        float distanceFactor = clamp(cameraDistance / 10000000.0, 1.0, 3.0);
         viewAngleFactor *= distanceFactor;
         
-        // 최소/최대 두께 제한
-        viewAngleFactor = clamp(viewAngleFactor, 0.5, 4.0);
+        // 최소/최대 두께 제한 (너무 얇아지지 않도록)
+        viewAngleFactor = clamp(viewAngleFactor, 0.5, 8.0);
+    } else {
+        // 2D 모드에서는 기존 방식 사용
+        normalVector = vec2(-direction.y, direction.x);
+        normalVector.x = normalVector.x / aspect;
+        
+        // 2D에서도 방향 길이에 따른 조정
+        float directionLength = length(pointB_XY - pointA_XY);
+        float lengthFactor = clamp(directionLength, 0.01, 1.0);
+        viewAngleFactor = mix(2.0, 1.0, lengthFactor);
     }
 
-    // 使用 widthFactor와 viewAngleFactor 조정宽度
+    // 使用 widthFactor와 viewAngleFactor 조정 너비
     float offsetLength = widthFactor * lineWidth.y * viewAngleFactor;
     normalVector = offsetLength * normalVector;
 
@@ -174,7 +215,9 @@ void main() {
             projectedCoordinates.previous,
             projectedCoordinates.current,
             offsetSign,
-            widthFactor
+            widthFactor,
+            previousPosition,
+            currentPosition
         );
         gl_Position = projectedCoordinates.previous + offset;
         v_segmentPosition = 0.0; // 头部
@@ -187,7 +230,9 @@ void main() {
             projectedCoordinates.current,
             extendedPosition,
             offsetSign,
-            widthFactor
+            widthFactor,
+            previousPosition,
+            currentPosition
         );
         gl_Position = extendedPosition + offset;
         v_segmentPosition = 1.0; // 尾部
@@ -211,6 +256,15 @@ uniform sampler2D segmentsDepthTexture;
 uniform float cameraDistance;
 uniform bool is3D;
 
+// Visibility control uniforms
+uniform float minSpeedAlpha;
+uniform float maxSpeedAlpha;
+uniform float minCameraAlpha;
+uniform float maxCameraAlpha;
+uniform float cameraDistanceThreshold;
+uniform float edgeFadeWidth;
+uniform float minEdgeFade;
+
 out vec4 fragColor;
 
 void main() {
@@ -220,22 +274,47 @@ void main() {
         float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
         vec4 baseColor = texture(colorTable, vec2(normalizedSpeed, zero));
 
-        // 使用更平滑的渐变效果
-        float alpha = smoothstep(0.0, 1.0, v_segmentPosition);
-        alpha = pow(alpha, 1.5); // 调整透明度渐变曲线
-
-        // 根据速度调整透明度
-        float speedAlpha = mix(0.4, 1.0, speed.a);
+        // 더 부드러운 렌더링을 위한 안티앨리어싱
+        vec2 coord = textureCoordinate;
         
-        // 카메라 거리에 따른 알파 조정 (더 멀리 있을 때 더 선명하게)
-        float cameraAlpha = 1.0;
-        if (is3D) {
-            float distanceNormalized = clamp(cameraDistance / 20000000.0, 0.0, 1.0);
-            cameraAlpha = mix(0.6, 1.0, distanceNormalized); // 가까이서는 0.6, 멀리서는 1.0
+        // 파티클의 너비 방향으로 부드러운 가장자리 만들기
+        // textureCoordinate.t는 파티클의 너비 방향 (0~1)
+        float widthFade = 1.0;
+        
+        // 파티클 가장자리에서 투명도 감소 (사용자 조절 가능)
+        if (coord.t < edgeFadeWidth) {
+            widthFade = smoothstep(0.0, edgeFadeWidth, coord.t);
+        } else if (coord.t > 1.0 - edgeFadeWidth) {
+            widthFade = smoothstep(1.0, 1.0 - edgeFadeWidth, coord.t);
         }
 
-        // 组合颜色和透明度
-        fragColor = vec4(baseColor.rgb, baseColor.a * alpha * speedAlpha * cameraAlpha);
+        // 길이 방향 투명도 조정 (꼬리 부분)
+        float alpha = smoothstep(0.0, 1.0, v_segmentPosition);
+        alpha = pow(alpha, 1.2); // 더 부드러운 꼬리 그라디언트
+
+        // 속도에 따른 투명도 (사용자 조절 가능)
+        float speedAlpha = mix(minSpeedAlpha, maxSpeedAlpha, normalizedSpeed);
+        
+        // 카메라 거리에 따른 알파 조정 (사용자 조절 가능)
+        float cameraAlpha = 1.0;
+        if (is3D) {
+            float distanceNormalized = clamp(cameraDistance / cameraDistanceThreshold, 0.0, 1.0);
+            cameraAlpha = mix(minCameraAlpha, maxCameraAlpha, distanceNormalized);
+        }
+
+        // 가장자리 페이드 조정 (사용자 조절 가능)
+        float adjustedWidthFade = mix(minEdgeFade, 1.0, widthFade);
+
+        // 모든 알파 값 조합
+        float finalAlpha = baseColor.a * alpha * speedAlpha * cameraAlpha * adjustedWidthFade;
+        
+        // 부드러운 색상 블렌딩
+        vec3 finalColor = baseColor.rgb;
+        
+        // 파티클이 더 생동감 있게 보이도록 약간의 채도 조정
+        finalColor = mix(finalColor, finalColor * 1.1, normalizedSpeed * 0.3);
+        
+        fragColor = vec4(finalColor, finalAlpha);
     } else {
         fragColor = vec4(zero);
     }

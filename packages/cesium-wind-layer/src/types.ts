@@ -84,6 +84,36 @@ export interface FlowLayerOptions {
    * The image will be converted to a grayscale mask where white areas are valid and black areas are invalid.
    */
   maskUrl?: string;
+  /**
+   * Controls particle visibility based on speed and camera distance.
+   * @property {number} [minSpeedAlpha] - Minimum alpha for slow particles (0.0-1.0). Default is 0.7.
+   * @property {number} [maxSpeedAlpha] - Maximum alpha for fast particles (0.0-1.0). Default is 1.0.
+   * @property {number} [minCameraAlpha] - Minimum alpha when camera is close (0.0-1.0). Default is 0.8.
+   * @property {number} [maxCameraAlpha] - Maximum alpha when camera is far (0.0-1.0). Default is 1.0.
+   * @property {number} [cameraDistanceThreshold] - Distance threshold for camera alpha (meters). Default is 20000000.
+   * @property {number} [edgeFadeWidth] - Width of edge fade effect (0.0-0.5). Default is 0.1.
+   * @property {number} [minEdgeFade] - Minimum fade value at edges (0.0-1.0). Default is 0.6.
+   */
+  visibility?: {
+    minSpeedAlpha?: number;
+    maxSpeedAlpha?: number;
+    minCameraAlpha?: number;
+    maxCameraAlpha?: number;
+    cameraDistanceThreshold?: number;
+    edgeFadeWidth?: number;
+    minEdgeFade?: number;
+  };
+  /**
+   * Controls pixel size calculation for zoom-level adaptation.
+   * @property {number} [minPixelSize] - Minimum pixel size (prevents particles from becoming too small). Default is 200.
+   * @property {number} [maxPixelSize] - Maximum pixel size. Default is 1000.
+   * @property {boolean} [useLogScale] - Whether to use logarithmic scaling for smooth zoom transitions. Default is true.
+   */
+  pixelSizeOptions?: {
+    minPixelSize?: number;
+    maxPixelSize?: number;
+    useLogScale?: boolean;
+  };
 }
 
 export interface ArrayWithMinMax {

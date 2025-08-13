@@ -28,14 +28,14 @@ const dataConfigs = {
         min: 0,
         max: 0.02,
       },
-      speedFactor: 1,
+      speedFactor: 0.7,
       
       // lineWidth: { min: 1, max: 3 }, // 좁은 지역이므로 선 굵기 변화를 줌
       // lineLength: { min: 5, max: 15 }, // 좁은 지역에 맞게 파티클 길이를 줄임
       particleHeight: 100,
       
       lineLength: { min: 0.1, max: 0.3 },
-      lineWidth: { min: 0.1, max: 0.2 },
+      lineWidth: { min: 0.1, max: 0.101 },
     },
   }
 };
@@ -47,6 +47,20 @@ const defaultOptions: Partial<FlowLayerOptions> = {
   flipY: false,
   useViewerBounds: true,
   dynamic: true,
+  visibility: {
+    minSpeedAlpha: 0.3,      // 가까이서 볼 때 느린 파티클도 보이게
+    maxSpeedAlpha: 1.0,
+    minCameraAlpha: 0.5,     // 가까이서 볼 때 투명도 높임
+    maxCameraAlpha: 1.0,
+    cameraDistanceThreshold: 10000000,  // 거리 임계값 낮춤
+    edgeFadeWidth: 0.05,     // 가장자리 페이드 줄임
+    minEdgeFade: 0.8         // 최소 가장자리 투명도 높임
+  },
+  pixelSizeOptions: {
+    minPixelSize: 200,       // 줌인 시에도 충분한 크기 보장
+    maxPixelSize: 1000,
+    useLogScale: true        // 부드러운 줌 전환
+  }
 };
 
 // GUI controls configuration
@@ -72,7 +86,7 @@ const setupGUI = (flowLayer: FlowLayer) => {
   
   // Animation Controls
   const animationFolder = gui.addFolder('Animation');
-  animationFolder.add(options, 'speedFactor', 1, 5.0, 0.5)
+  animationFolder.add(options, 'speedFactor', 0.1, 3.0, 0.1)
     .name('Speed Factor')
     .onChange((value: number) => {
       flowLayer.updateOptions({ speedFactor: value });
@@ -201,6 +215,110 @@ const setupGUI = (flowLayer: FlowLayer) => {
     .name('Color Preset')
     .onChange((presetName: string) => {
       flowLayer.updateOptions({ colors: colorPresets[presetName as keyof typeof colorPresets] });
+    });
+
+  // Visibility Controls
+  const visibilityFolder = gui.addFolder('Visibility');
+  if (!options.visibility) {
+    options.visibility = {
+      minSpeedAlpha: 0.7,
+      maxSpeedAlpha: 1.0,
+      minCameraAlpha: 0.8,
+      maxCameraAlpha: 1.0,
+      cameraDistanceThreshold: 20000000,
+      edgeFadeWidth: 0.1,
+      minEdgeFade: 0.6
+    };
+  }
+  
+  visibilityFolder.add(options.visibility, 'minSpeedAlpha', 0.0, 1.0, 0.1)
+    .name('Slow Particles Alpha')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, minSpeedAlpha: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'maxSpeedAlpha', 0.0, 1.0, 0.1)
+    .name('Fast Particles Alpha')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, maxSpeedAlpha: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'minCameraAlpha', 0.0, 1.0, 0.1)
+    .name('Close View Alpha')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, minCameraAlpha: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'maxCameraAlpha', 0.0, 1.0, 0.1)
+    .name('Far View Alpha')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, maxCameraAlpha: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'cameraDistanceThreshold', 1000000, 50000000, 100000)
+    .name('Distance Threshold')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, cameraDistanceThreshold: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'edgeFadeWidth', 0.0, 0.5, 0.05)
+    .name('Edge Fade Width')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, edgeFadeWidth: value }
+      });
+    });
+  
+  visibilityFolder.add(options.visibility, 'minEdgeFade', 0.0, 1.0, 0.1)
+    .name('Min Edge Alpha')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        visibility: { ...options.visibility!, minEdgeFade: value }
+      });
+    });
+
+  // Pixel Size Controls
+  const pixelSizeFolder = gui.addFolder('Pixel Size');
+  if (!options.pixelSizeOptions) {
+    options.pixelSizeOptions = {
+      minPixelSize: 200,
+      maxPixelSize: 1000,
+      useLogScale: true
+    };
+  }
+  
+  pixelSizeFolder.add(options.pixelSizeOptions, 'minPixelSize', 50, 500, 10)
+    .name('Min Pixel Size')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        pixelSizeOptions: { ...options.pixelSizeOptions!, minPixelSize: value }
+      });
+    });
+  
+  pixelSizeFolder.add(options.pixelSizeOptions, 'maxPixelSize', 500, 2000, 50)
+    .name('Max Pixel Size')
+    .onChange((value: number) => {
+      flowLayer.updateOptions({ 
+        pixelSizeOptions: { ...options.pixelSizeOptions!, maxPixelSize: value }
+      });
+    });
+  
+  pixelSizeFolder.add(options.pixelSizeOptions, 'useLogScale')
+    .name('Use Log Scale')
+    .onChange((value: boolean) => {
+      flowLayer.updateOptions({ 
+        pixelSizeOptions: { ...options.pixelSizeOptions!, useLogScale: value }
+      });
     });
   
   // Layer controls

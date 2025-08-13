@@ -31,7 +31,21 @@ export const DefaultOptions: FlowLayerOptions = {
   useViewerBounds: false,
   domain: undefined,
   displayRange: undefined,
-  dynamic: true
+  dynamic: true,
+  visibility: {
+    minSpeedAlpha: 0.9,        // 0.7 → 0.9로 상향 (느린 파티클도 잘 보이게)
+    maxSpeedAlpha: 1.0,
+    minCameraAlpha: 0.95,      // 0.8 → 0.95로 상향 (가까이서도 잘 보이게)
+    maxCameraAlpha: 1.0,
+    cameraDistanceThreshold: 50000000,  // 20000000 → 50000000으로 확대
+    edgeFadeWidth: 0.05,       // 0.1 → 0.05로 축소 (가장자리 페이드 줄임)
+    minEdgeFade: 0.8           // 0.6 → 0.8로 상향 (가장자리도 더 불투명하게)
+  },
+  pixelSizeOptions: {
+    minPixelSize: 200,
+    maxPixelSize: 1000,
+    useLogScale: true
+  }
 }
 
 export class FlowLayer {
@@ -344,10 +358,23 @@ export class FlowLayer {
       const visibleRatioLat = (latRange.y - latRange.x) / dataLatRange;
       const visibleRatio = Math.min(visibleRatioLon, visibleRatioLat);
 
-      // Map the ratio to a pixelSize value between 0 and 1000
-      const pixelSize = 1000 * visibleRatio;
+      // 개선된 pixelSize 계산 - 로그 스케일로 급격한 변화 방지
+      const pixelSizeOpts = this.options.pixelSizeOptions || DefaultOptions.pixelSizeOptions!;
+      const minPixelSize = pixelSizeOpts.minPixelSize ?? 200;
+      const maxPixelSize = pixelSizeOpts.maxPixelSize ?? 1000;
+      const useLogScale = pixelSizeOpts.useLogScale ?? true;
+      
+      let pixelSize: number;
+      if (useLogScale) {
+        const logScale = Math.log10(Math.max(0.001, visibleRatio) * 1000 + 1) / Math.log10(1001);
+        pixelSize = minPixelSize + (maxPixelSize - minPixelSize) * logScale;
+      } else {
+        // 선형 스케일
+        pixelSize = minPixelSize + (maxPixelSize - minPixelSize) * visibleRatio;
+      }
+      
       if (pixelSize > 0) {
-        this.viewerParameters.pixelSize = Math.max(0, Math.min(1000, pixelSize));
+        this.viewerParameters.pixelSize = pixelSize;
       }
     }
 

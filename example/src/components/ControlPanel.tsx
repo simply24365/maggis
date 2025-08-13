@@ -609,6 +609,184 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   </div>
                 </Space>
               </CompactFormItem>
+
+              <CompactFormItem
+                label={renderLabel(
+                  'Visibility Controls',
+                  'Controls particle visibility based on speed and camera distance.'
+                )}
+              >
+                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                      Speed-based Transparency
+                    </Text>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'minSpeedAlpha']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Slow Particles
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={1.0}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="0.7"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'maxSpeedAlpha']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Fast Particles
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={1.0}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="1.0"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                      Camera Distance Transparency
+                    </Text>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'minCameraAlpha']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Close View
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={1.0}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="0.8"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'maxCameraAlpha']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Far View
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={1.0}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="1.0"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <CompactFormItem
+                      name={['visibility', 'cameraDistanceThreshold']}
+                      label={
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          Distance Threshold (meters)
+                        </Text>
+                      }
+                      style={{ marginBottom: 0 }}
+                    >
+                      <InputNumber
+                        min={1000000}
+                        max={50000000}
+                        step={1000000}
+                        style={{ width: '100%' }}
+                        placeholder="20000000"
+                        formatter={(value) => value ? `${(value / 1000000).toFixed(0)}M` : ''}
+                        parser={(value) => {
+                          const num = parseFloat(value?.replace('M', '') || '0');
+                          return num * 1000000;
+                        }}
+                      />
+                    </CompactFormItem>
+                  </div>
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                      Edge Fade Settings
+                    </Text>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'edgeFadeWidth']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Fade Width
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={0.5}
+                            step={0.05}
+                            style={{ width: '100px' }}
+                            placeholder="0.1"
+                            precision={2}
+                          />
+                        </CompactFormItem>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <CompactFormItem
+                          name={['visibility', 'minEdgeFade']}
+                          label={
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              Min Edge Alpha
+                            </Text>
+                          }
+                          style={{ marginBottom: 0 }}
+                        >
+                          <InputNumber
+                            min={0.0}
+                            max={1.0}
+                            step={0.1}
+                            style={{ width: '100px' }}
+                            placeholder="0.6"
+                            precision={1}
+                          />
+                        </CompactFormItem>
+                      </div>
+                    </div>
+                  </div>
+                </Space>
+              </CompactFormItem>
             </Space>
           </Form>
         </CardContent>
