@@ -98,7 +98,7 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
         float rightLength = length(rightVector);
         
         // cross product가 0에 가까울 때 (정면/후면에서 볼 때) 대체 벡터 사용
-        if (rightLength < 0.001) {
+        if (rightLength < 0.05) {
             // 카메라의 up 벡터를 사용하여 대체 right 벡터 생성
             rightVector = normalize(cross(particleDirection, cameraUp));
             rightLength = length(rightVector);
@@ -112,7 +112,7 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
         }
         
         // 월드 좌표의 right 벡터를 스크린 좌표로 변환
-        vec4 rightWorld4 = vec4(worldPointA + rightVector * 1000.0, 1.0);
+        vec4 rightWorld4 = vec4(worldPointA + rightVector * 10.0, 1.0);
         vec4 centerWorld4 = vec4(worldPointA, 1.0);
         vec4 rightScreen = czm_modelViewProjection * rightWorld4;
         vec4 centerScreen = czm_modelViewProjection * centerWorld4;
