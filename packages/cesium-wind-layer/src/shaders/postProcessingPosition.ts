@@ -16,7 +16,7 @@ uniform float randomCoefficient;
 uniform float dropRate;
 uniform float dropRateBump;
 
-// 添加新的 uniform 变量
+// 새로운 uniform 변수 추가
 uniform bool useViewerBounds;
 
 in vec2 v_textureCoordinates;
@@ -33,12 +33,12 @@ float rand(vec2 seed, vec2 range) {
 
 vec2 generateRandomParticle(vec2 seed) {
     if (useViewerBounds) {
-        // 在当前视域范围内生成粒子
+        // 현재 시야 범위 내에서 파티클 생성
         float randomLon = rand(seed, lonRange);
         float randomLat = rand(-seed, latRange);
         return vec2(randomLon, randomLat);
     } else {
-        // 在数据范围内生成粒子
+        // 데이터 범위 내에서 파티클 생성
         float randomLon = rand(seed, dataLonRange);
         float randomLat = rand(-seed, dataLatRange);
         return vec2(randomLon, randomLat);

@@ -9,14 +9,14 @@ in vec2 v_textureCoordinates;
 out vec4 fragColor;
 
 void main() {
-    // 获取当前粒子的位置
+    // 현재 파티클의 위치 가져오기
     vec2 currentPos = texture(currentParticlesPosition, v_textureCoordinates).rg;
-    // 获取粒子的速度
+    // 파티클의 속도 가져오기
     vec2 speed = texture(particlesSpeed, v_textureCoordinates).rg;
-    // 计算下一个位置
+    // 다음 위치 계산
     vec2 nextPos = currentPos + speed;
     
-    // 将新的位置写入 fragColor
+    // 새로운 위치를 fragColor에 쓰기
     fragColor = vec4(nextPos, 0.0, 1.0);
 }
 `;

@@ -99,12 +99,12 @@ export class FlowParticlesRendering {
 
   createSegmentsGeometry(): Geometry {
     const repeatVertex = 4, texureSize = this.options.particlesTextureSize;
-    // 坐标系
+    // 좌표계
     //  z
     //  | /y
     //  |/
     //  o------x
-    let st: any = []; // 纹理数组 st坐标系，左下角被定义为(0,0), 右上角为(1,1)，用于传入到顶点着色器中指代粒子的位置
+    let st: any = []; // 텍스처 배열 st좌표계, 좌하단이 (0,0), 우상단이 (1,1)로 정의되며, 버텍스 셰이더에 전달되어 파티클의 위치를 나타냄
     for (let s = 0; s < texureSize; s++) {
       for (let t = 0; t < texureSize; t++) {
         for (let i = 0; i < repeatVertex; i++) {
@@ -129,12 +129,12 @@ export class FlowParticlesRendering {
     }
     normal = new Float32Array(normal);
 
-    let vertexIndexes: any = []; // 索引,一个粒子矩形由两个三角形组成
+    let vertexIndexes: any = []; // 인덱스, 하나의 파티클 사각형은 두 개의 삼각형으로 구성됨
     for (let i = 0, vertex = 0; i < particlesCount; i++) {
       vertexIndexes.push(
-        // 第一个三角形用的顶点
+        // 첫 번째 삼각형에 사용되는 버텍스
         vertex + 0, vertex + 1, vertex + 2,
-        // 第二个三角形用的顶点
+        // 두 번째 삼각형에 사용되는 버텍스
         vertex + 2, vertex + 1, vertex + 3
       )
 

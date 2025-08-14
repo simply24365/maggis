@@ -22,12 +22,12 @@ uniform vec3 cameraDirection;
 uniform vec3 cameraUp;
 uniform float cameraDistance;
 
-// 添加输出变量传递给片元着色器
+// 프래그먼트 셰이더에 전달할 출력 변수 추가
 out vec4 speed;
 out float v_segmentPosition;
 out vec2 textureCoordinate;
 
-// 添加结构体定义
+// 구조체 정의 추가
 struct adjacentPoints {
     vec4 previous;
     vec4 current;
@@ -63,7 +63,7 @@ vec3 convertCoordinate(vec2 lonLat) {
 vec4 calculateProjectedCoordinate(vec2 lonLat) {
     if (is3D) {
         vec3 particlePosition = convertCoordinate(lonLat);
-        // 使用 modelViewProjection 矩阵进行投影变换
+        // modelViewProjection 매트릭스를 사용한 투영 변환
         vec4 projectedPosition = czm_modelViewProjection * vec4(particlePosition, 1.0);
         return projectedPosition;
     } else {
@@ -147,7 +147,7 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
         viewAngleFactor = mix(2.0, 1.0, lengthFactor);
     }
 
-    // 使用 widthFactor와 viewAngleFactor 조정 너비
+    // widthFactor와 viewAngleFactor를 사용하여 너비 조정
     float offsetLength = widthFactor * lineWidth.y * viewAngleFactor;
     normalVector = offsetLength * normalVector;
 
@@ -156,7 +156,7 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
 }
 
 void main() {
-    // 翻转 Y 轴坐标
+    // Y축 좌표 뒤집기
     vec2 flippedIndex = vec2(st.x, 1.0 - st.y);
 
     vec2 particleIndex = flippedIndex;
@@ -190,13 +190,13 @@ void main() {
     float offsetSign = normal.y;
     vec4 offset = vec4(0.0);
 
-    // 计算速度相关的宽度和长度因子
+    // 속도 관련 너비와 길이 팩터 계산
     float speedLength = clamp(speed.b, domain.x, domain.y);
     float normalizedSpeed = (speedLength - domain.x) / (domain.y - domain.x);
     
-    // 根据速度计算宽度
+    // 속도에 따른 너비 계산
     float widthFactor = mix(lineWidth.x, lineWidth.y, normalizedSpeed);
-    widthFactor *= (pointToUse < 0 ? 1.0 : 0.5); // 头部更宽，尾部更窄
+    widthFactor *= (pointToUse < 0 ? 1.0 : 0.5); // 머리 부분은 더 넓게, 꼬리 부분은 더 좁게
 
     // 카메라 거리와 각도를 고려한 길이 계산
     float lengthFactor = mix(lineLength.x, lineLength.y, normalizedSpeed) * pixelSize;
@@ -210,7 +210,7 @@ void main() {
     }
 
     if (pointToUse == 1) {
-        // 头部位置
+        // 머리 부분 위치
         offset = pixelSize * calculateOffsetOnNormalDirection(
             projectedCoordinates.previous,
             projectedCoordinates.current,
@@ -220,7 +220,7 @@ void main() {
             currentPosition
         );
         gl_Position = projectedCoordinates.previous + offset;
-        v_segmentPosition = 0.0; // 头部
+        v_segmentPosition = 0.0; // 머리 부분
     } else if (pointToUse == -1) {
         // Get direction and normalize it to length 1.0
         vec4 direction = normalize(projectedCoordinates.next - projectedCoordinates.current);
@@ -235,7 +235,7 @@ void main() {
             currentPosition
         );
         gl_Position = extendedPosition + offset;
-        v_segmentPosition = 1.0; // 尾部
+        v_segmentPosition = 1.0; // 꼬리 부분
     }
 
     textureCoordinate = st;

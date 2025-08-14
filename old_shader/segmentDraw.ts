@@ -18,12 +18,12 @@ uniform vec2 lineLength;
 uniform vec2 domain;
 uniform bool is3D;
 
-// 添加输出变量传递给片元着色器
+// 프래그먼트 셰이더에 전달할 출력 변수 추가
 out vec4 speed;
 out float v_segmentPosition;
 out vec2 textureCoordinate;
 
-// 添加结构体定义
+// 구조체 정의 추가
 struct adjacentPoints {
     vec4 previous;
     vec4 current;
@@ -59,7 +59,7 @@ vec3 convertCoordinate(vec2 lonLat) {
 vec4 calculateProjectedCoordinate(vec2 lonLat) {
     if (is3D) {
         vec3 particlePosition = convertCoordinate(lonLat);
-        // 使用 modelViewProjection 矩阵进行投影变换
+        // modelViewProjection 매트릭스를 사용한 투영 변환
         vec4 projectedPosition = czm_modelViewProjection * vec4(particlePosition, 1.0);
         return projectedPosition;
     } else {
@@ -73,14 +73,14 @@ vec4 calculateOffsetOnNormalDirection(vec4 pointA, vec4 pointB, float offsetSign
     vec2 pointA_XY = (pointA.xy / pointA.w) * aspectVec2;
     vec2 pointB_XY = (pointB.xy / pointB.w) * aspectVec2;
 
-    // 计算方向向量
+    // 방향 벡터 계산
     vec2 direction = normalize(pointB_XY - pointA_XY);
 
-    // 计算法向量
+    // 법선 벡터 계산
     vec2 normalVector = vec2(-direction.y, direction.x);
     normalVector.x = normalVector.x / aspect;
 
-    // 使用 widthFactor 调整宽度
+    // widthFactor를 사용하여 너비 조정
     float offsetLength = widthFactor * lineWidth.y;
     normalVector = offsetLength * normalVector;
 

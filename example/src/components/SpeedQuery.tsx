@@ -143,14 +143,14 @@ export const SpeedQuery: React.FC<SpeedQueryProps> = ({ flowLayer, viewer }) => 
   const lastLocationRef = useRef<{ lon: number; lat: number } | null>(null);
 
   const calculateWindDirection = (u: number, v: number): number => {
-    // 使用 atan2 计算角度，注意参数顺序：atan2(y, x)
-    // v 代表南北方向（y轴），u 代表东西方向（x轴）
+    // atan2를 사용하여 각도 계산, 매개변수 순서 주의: atan2(y, x)
+    // v는 남북 방향(y축), u는 동서 방향(x축)을 나타냄
     let angle = Math.atan2(v, u) * 180 / Math.PI;
     
-    // 转换为地理坐标系的角度：
-    // 1. atan2 得到的角度是数学坐标系（东为0°，逆时针为正）
-    // 2. 转换为地理方向：逆时针旋转90度（或顺时针旋转270度）
-    // 3. 加360°并取模确保在0-360范围内
+    // 지리좌표계 각도로 변환:
+    // 1. atan2로 얻은 각도는 수학좌표계(동쪽이 0°, 반시계방향이 양수)
+    // 2. 지리방향으로 변환: 반시계방향으로 90도 회전(또는 시계방향으로 270도 회전)
+    // 3. 360도를 더하고 모듈로 연산으로 0-360 범위 보장
     angle = (450 - angle) % 360;
     
     return angle;

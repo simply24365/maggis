@@ -732,7 +732,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         formatter={(value) => value ? `${(value / 1000000).toFixed(0)}M` : ''}
                         parser={(value) => {
                           const num = parseFloat(value?.replace('M', '') || '0');
-                          return num * 1000000;
+                          return (num * 1000000) as any;
                         }}
                       />
                     </CompactFormItem>
