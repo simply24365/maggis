@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Flow Visualization Test</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  
+  <script src="./dist/magFlow.umd.js"></script>
+  
+  <script>
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1Yjg3ZmQ3OC00MzMxLTQ5YTctYTYxMi1mOWRmYWI0YjhhMGUiLCJpZCI6MzI2OTU5LCJpYXQiOjE3NTM4NjM2NTR9.KhAkQtUgEh5y_QIC4bxBl65WmZ6vbBYYbpDgGkDf5b4';
+
+    async function main() {
+      const viewer = new Cesium.Viewer('cesiumContainer', {
+        terrainProvider: await Cesium.createWorldTerrainAsync()
+      });
+
+      const flowLayerOptions = {
+        particlesTextureSize: 300,
+        dropRate: 0.003,
+        particleHeight: 120,
+        dropRateBump: 0.01,
+        speedFactor: 1, 
+        lineWidth: { min: 0.15, max: 0.5 },
+        lineLength: { min: 0.15, max: 0.1 },
+        colors: ['cyan', 'lime', 'yellow', 'red'],
+        flipY: false,
+        dynamic: true,
+      };
+
+      const manager = new magFlow.FlowVisualizationManager(viewer, flowLayerOptions, {
+        polygonUrl: "/river-data/38.rgo",
+        maskUrl: "/river-data/mask.png",
+        csvBaseUrl: "/river-data/20250730",
+        initialCsvFile: "/river-data/20250730/1.csv",   
+        maxTime: 137
+      });
+      
+      await manager.initialize();
+      manager.setCameraView();
+      manager.setVisible(true);
+      manager.setGuiVisible(true);
+
+      window.flowManager = manager;
+    }
+
+    main().catch(console.error);
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+
+  },
+  "include": ["src/lib.ts", "src/EarthCube.ts",
+    "src/flow/**/*.ts" 
+  ],
+  "exclude": ["src/main.ts", "**/*.test.ts"]
+}

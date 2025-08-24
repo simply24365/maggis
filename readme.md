@@ -1,115 +1,84 @@
-./packages/cesium-wind-layer/readme.md
+1) 빌드 & 서빙 (Windows)
+- 프로젝트 루트(c:\Users\simply\proj2\magflow)에서:
+````bash
+# 의존 설치 (한번만)
+pnpm install
 
-각 GUI 옵션의 역할과 효과를 분석해드리겠습니다:
+# 타입 + 라이브러리 빌드
+pnpm run build:all
 
-## 🎛️ **Particle System Controls**
+# public 폴더를 정적서버로 띄우기
+pnpm run serve:node
+# 브라우저로 열기: http://localhost:3000/test-simple.html
+````
+(또는 필요 시 PowerShell/CMD에서 동일 명령 사용)
 
-### **Particles Texture Size** (50-500)
-- **역할**: 동시에 표시되는 최대 파티클 수 제어
-- **효과**: 
-  - ⬆️ 증가 → 더 많은 파티클, 더 조밀한 시각화, 성능 저하
-  - ⬇️ 감소 → 적은 파티클, 성능 향상, 희박한 시각화
+2) HTML에서 UMD 스크립트 불러오기 및 사용 예
+현재 당신의 test-simple.html 예시와 동일하게 magFlow.umd.js 를 전역 magFlow 네임스페이스로 불러온다. 사용 예:
+````html
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="cesiumContainer"></div>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
+    <script src="./dist/magFlow.umd.js"></script>
+    <script>
+      // magFlow는 전역으로 노출됩니다.
+      const viewer = new Cesium.Viewer('cesiumContainer');
+      const flowLayerOptions = { /* 간단 예: 위 파일과 동일 */ };
 
-### **Particle Height** (0-5000m)
-- **역할**: 파티클이 지면에서 떠 있는 높이
-- **효과**: 
-  - ⬆️ 증가 → 파티클이 지형 위로 더 높이 표시
-  - ⬇️ 감소 → 지형에 가까워져 일부 파티클이 지형에 가려질 수 있음
+      // 데이터/설정 옵션
+      const dataOpts = {
+        polygonUrl: "/river-data/38.rgo",
+        maskUrl: "/river-data/mask.png",
+        csvBaseUrl: "/river-data/20250730",
+        initialCsvFile: "/river-data/20250730/1.csv",
+        maxTime: 137
+      };
 
-## 🎬 **Animation Controls**
+      const manager = new magFlow.FlowVisualizationManager(viewer, flowLayerOptions, dataOpts);
+      // 초기화(비동기)
+      manager.initialize().then(() => {
+        manager.setCameraView();
+        manager.setVisible(true);
+        manager.setGuiVisible(true);
+        window.flowManager = manager; // 디버깅용
+      }).catch(console.error);
+    </script>
+  </body>
+</html>
+````
 
-### **Speed Factor** (0.1-5.0)
-- **역할**: 파티클 이동 속도 배율 (calculateSpeed.ts 의 `speedScaleFactor`)
-- **효과**:
-  - ⬆️ 증가 → 파티클이 빠르게 움직임, 동적인 애니메이션
-  - ⬇️ 감소 → 파티클이 천천히 움직임, 정적인 느낌
+3) 주요 메서드(사용 예)
+- new magFlow.FlowVisualizationManager(viewer, flowLayerOptions, dataOptions)
+- await manager.initialize() — 내부 리소스/CSV 로드 등 초기화
+- manager.setCameraView() — 뷰를 데이터 영역으로 맞춤
+- manager.setVisible(true|false) — 레이어 표시/숨김
+- manager.setGuiVisible(true|false) — GUI 표시 토글
 
-### **Drop Rate** (0.001-0.02)
-- **역할**: 파티클이 새로 생성되는 빈도 (postProcessingPosition.ts의 `dropRate`)
-- **효과**:
-  - ⬆️ 증가 → 파티클이 자주 새로 생성됨, 짧은 궤적
-  - ⬇️ 감소 → 파티클이 오래 살아있음, 긴 궤적
+4) dataOptions 파라미터 설명 (당신이 제시한 것)
+- polygonUrl: "/river-data/38.rgo"
+  - 유역/경계 등 벡터 폴리곤 파일의 URL. 라이브러리가 해석하는 포맷(.rgo)에 맞는 경로.
+- maskUrl: "/river-data/mask.png"
+  - 마스크 이미지 (PNG). 유효한 영역만 보이도록 파티클을 클리핑할 때 사용.
+- csvBaseUrl: "/river-data/20250730"
+  - 시간별 CSV 파일들이 위치한 기본 폴더 URL. 각 타임스텝 CSV를 이 경로 기준으로 로드.
+- initialCsvFile: "/river-data/20250730/1.csv"
+  - 초기 로드할 CSV 파일(full path or relative). 초기 상태/첫 프레임 데이터.
+- maxTime: 137
+  - 시뮬레이션/타임스텝의 최대 인덱스 또는 프레임 수(라이브러리 내부에서 타임 루프의 상한으로 사용).
 
-### **Drop Rate Bump** (0.001-0.02)
-- **역할**: 느린 속도 파티클에 대한 추가 리셋 확률
-- **효과**:
-  - ⬆️ 증가 → 느린 영역의 파티클이 더 자주 리셋됨
-  - ⬇️ 감소 → 정체된 파티클들이 더 오래 남아있음
+5) flowLayerOptions(요약)
+- particlesTextureSize: 정점/텍스처 해상도 (숫자)
+- dropRate, dropRateBump: 입자 재생성 비율 관련
+- particleHeight: 입자 고도 (m)
+- speedFactor: 유속 스케일링
+- lineWidth: {min, max} — 렌더된 선 굵기 범위
+- lineLength: {min, max} — 꼬리 길이 범위
+- colors: ['cyan','lime',...] — 컬러 팔레트
+- dynamic: boolean — 동적 업데이트 여부
 
-### **Dynamic Animation** (toggle)
-- **역할**: 파티클 움직임 활성화/비활성화
-- **효과**:
-  - ✅ ON → 파티클이 속도에 따라 움직임
-  - ❌ OFF → 파티클이 정적으로 고정됨
-
-## 📏 **Line Properties**
-
-### **Min/Max Line Width** (0.001-1)
-- **역할**: 파티클 궤적의 두께 (segmentDraw.ts의 `lineWidth`)
-- **효과**:
-  - ⬆️ 증가 → 더 굵은 선, 시각적으로 돋보임
-  - ⬇️ 감소 → 더 얇은 선, 세밀한 표현
-
-### **Min/Max Line Length** (0.001-1)
-- **역할**: 파티클 궤적의 길이 (segmentDraw.ts의 `lineLength`)
-- **효과**:
-  - ⬆️ 증가 → 더 긴 꼬리, 궤적이 명확
-  - ⬇️ 감소 → 더 짧은 꼬리, 점 형태에 가까움
-
-## 📊 **Domain & Display Controls**
-
-### **Domain Min/Max** (0-20)
-- **역할**: 속도 값의 처리 범위 (calculateSpeed.ts의 `speedRange`)
-- **효과**:
-  - 범위 확대 → 더 넓은 속도 범위를 색상으로 표현
-  - 범위 축소 → 특정 속도 구간을 강조
-
-### **Display Range Min/Max** (0-20)
-- **역할**: 실제로 보여줄 속도 범위 (segmentDraw.ts의 `displayRange`)
-- **효과**:
-  - 범위 밖 파티클 → **완전히 투명해져 보이지 않음**
-  - 범위 내 파티클 → 정상적으로 표시
-
-## 🎨 **Color Presets**
-
-### **컬러 선택**
-- **Default**: 다색 그라데이션 (파란색→빨간색 스펙트럼)
-- **Blue-Red**: 파란색에서 빨간색으로 단순 그라데이션
-- **Ocean**: 바다색 계열 (파란색 톤)
-- **Viridis**: 과학적 시각화용 색상 (보라→녹색→노랑)
-- **White**: 단색 흰색
-
-## ⚙️ **Other Options**
-
-### **Flip Y Axis**
-- **역할**: Y축 방향 뒤집기
-- **효과**: 속도 벡터의 세로 방향이 반전됨
-
-### **Use Viewer Bounds**
-- **역할**: 카메라 시야 범위에서만 파티클 생성 (postProcessingPosition.ts의 `useViewerBounds`)
-- **효과**:
-  - ✅ ON → 현재 보이는 화면 영역에서만 파티클 생성
-  - ❌ OFF → 전체 데이터 범위에서 파티클 생성
-
-## 🎯 **Layer Controls**
-
-### **Show Layer**
-- **역할**: 레이어 전체 표시/숨김
-- **효과**: 즉시 모든 파티클이 보이거나 사라짐
-
-### **Zoom to Data**
-- **역할**: 데이터 영역으로 카메라 이동
-- **효과**: 강 유역 전체가 화면에 맞춰짐
-
-## 📈 **시각적 효과 요약**
-
-| 옵션 | 증가하면 | 감소하면 |
-|------|----------|----------|
-| **Particles Texture Size** | 더 조밀함 | 더 희박함 |
-| **Speed Factor** | 빠른 움직임 | 느린 움직임 |
-| **Drop Rate** | 짧은 궤적 | 긴 궤적 |
-| **Line Width** | 굵은 선 | 얇은 선 |
-| **Line Length** | 긴 꼬리 | 짧은 꼬리 |
-| **Display Range** | 더 많은 파티클 보임 | 일부 파티클 안 보임 |
-
-이러한 옵션들을 조합하여 강의 흐름을 다양한 스타일로 시각화할 수 있습니다! 🌊
+추가 팁
+- 모든 URL은 브라우저에서 접근 가능한 정적 경로여야 함(public 폴더 내부 or 서버 제공).
+- 빌드 후 magFlow.umd.js 가 갱신되므로 서빙 전에 빌드해야 함.
+- 콘솔에 에러가 있으면 manager.initialize() 에서 발생한 로드 실패(파일 경로, CORS)를 먼저 확인.
