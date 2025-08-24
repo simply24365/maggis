@@ -94,15 +94,21 @@ export class FlowLayer {
     this.viewerParameters = {
       lonRange: new Cartesian2(-180, 180),
       latRange: new Cartesian2(-90, 90),
-      pixelSize: 100000.0,
+      pixelSize: 1000.0,
       sceneMode: this.scene.mode
     };
+    
+    this.setupEventListeners();
     this.updateViewerParameters();
 
     this.particleSystem = new FlowParticleSystem(this.scene.context, this.flowData, this.options, this.viewerParameters, this.scene);
     this.add();
+  }
 
-    this.setupEventListeners();
+  private handleVisibilityChange(): void {
+    if (!document.hidden) {
+        this.updateViewerParameters();
+    }
   }
 
   private setupEventListeners(): void {
@@ -110,12 +116,14 @@ export class FlowLayer {
     this.viewer.camera.changed.addEventListener(this.updateViewerParameters.bind(this));
     this.scene.morphComplete.addEventListener(this.updateViewerParameters.bind(this));
     window.addEventListener("resize", this.updateViewerParameters.bind(this));
+    document.addEventListener('visibilitychange', this.handleVisibilityChange, false);
   }
 
   private removeEventListeners(): void {
     this.viewer.camera.changed.removeEventListener(this.updateViewerParameters.bind(this));
     this.scene.morphComplete.removeEventListener(this.updateViewerParameters.bind(this));
     window.removeEventListener("resize", this.updateViewerParameters.bind(this));
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange, false);
   }
 
   private processFlowData(flowData: FlowData): Required<FlowData> {
@@ -221,8 +229,14 @@ export class FlowLayer {
   }
 
   private updateViewerParameters(): void {
+    console.log(`viewer param update`);
+    
     const scene = this.viewer.scene;
     const canvas = scene.canvas;
+    if (!canvas || canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+        return; 
+    }
+
     const corners = [
       { x: 0, y: 0 },
       { x: 0, y: canvas.clientHeight },
@@ -291,7 +305,7 @@ export class FlowLayer {
       // Map the ratio to a pixelSize value between 0 and 1000
       const pixelSize = 1000 * visibleRatio;
       if (pixelSize > 0) {
-        this.viewerParameters.pixelSize = Math.max(0, Math.min(1000, pixelSize));
+        this.viewerParameters.pixelSize = Math.max(1, Math.min(1000, pixelSize));
       }
     }
 

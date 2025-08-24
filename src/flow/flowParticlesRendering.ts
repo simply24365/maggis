@@ -206,7 +206,14 @@ export class FlowParticlesRendering {
           return displayRange;
         },
         particleHeight: () => this.options.particleHeight || 0,
-        aspect: () => this.context.drawingBufferWidth / this.context.drawingBufferHeight,
+aspect: () => {
+  const height = this.context.drawingBufferHeight;
+  const width = this.context.drawingBufferWidth;
+  if (height > 0 || width > 0) {
+    return this.context.drawingBufferWidth / height;
+  }
+  return 1.0;
+},
         pixelSize: () => this.viewerParameters.pixelSize,
         lineWidth: () => {
           const width = this.options.lineWidth || DefaultOptions.lineWidth;
